@@ -128,7 +128,7 @@ export default function Configuracion() {
             <Campo label="Estado"><select value={f.estado} onChange={(e) => setF({ ...f, estado: e.target.value })}>{Object.entries(ESTADO_OBRA).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Campo>
           </div>
           <fieldset className="grupo"><legend>Encargados asignados</legend>
-            {usuarios.length === 0 && <p className="texto-suave chico">No hay encargados. Crealos en Usuarios.</p>}
+            {usuarios.length === 0 && <p className="texto-suave chico">No hay encargados habilitados. Habilitalos en Usuarios.</p>}
             {usuarios.map((u) => <label key={u.id} className="check"><input type="checkbox" checked={enc.includes(u.id)} onChange={() => setEnc((a) => (a.includes(u.id) ? a.filter((x) => x !== u.id) : [...a, u.id]))} /> {u.nombre} <span className="texto-suave">{u.activo ? '' : '(inactivo)'}</span></label>)}
           </fieldset>
           <button className="btn btn-primario" disabled={cargando}>Guardar datos</button>

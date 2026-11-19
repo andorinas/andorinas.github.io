@@ -17,7 +17,7 @@ export default function PagoForm({ obra, onClose, onListo, compromisoId }) {
   const [cargando, run] = useCargando();
   const cot = useCotizacion(f.fecha);
   const refConf = useRef(null);
-  useEffect(() => { if (preview) refConf.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }, [preview]);
+  useEffect(() => { if (preview) refConf.current?.scrollIntoView({ block: "nearest" }); }, [preview]);
   const set = (k) => (v) => { setPreview(null); setF((x) => ({ ...x, [k]: v })); };
 
   useEffect(() => {

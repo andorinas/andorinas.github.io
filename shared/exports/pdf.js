@@ -55,7 +55,7 @@ export function generarPdf(inf) {
     doc.fillColor(C.ink).font('Helvetica-Bold').fontSize(9.5)
       .text(`Fecha de corte: ${dmy(p.corte)}`, L + 10, y + 6, { continued: true })
       .font('Helvetica').text(`   ·   Moneda: ${M}   ·   Criterio: ${CRITERIO[p.criterio]}${p.criterio === 'manual' ? ` (${tc(p.cotizacionManual)})` : ''}`);
-    doc.fontSize(8.5).fillColor(C.gris).text(`Filtros: ${p.filtros.length ? p.filtros.join(' · ') : 'sin filtros (obra completa)'}`, L + 10, y + 20);
+    doc.fontSize(8.5).fillColor(C.gris).text(`Filtros: ${p.filtros.length ? p.filtros.join(' · ') : 'sin filtros (obra completa)'}`, L + 10, y + 20, { width: AW - 20, lineBreak: false, ellipsis: true });
     y += 44;
 
     if (!inf.completo) {
@@ -86,7 +86,7 @@ export function generarPdf(inf) {
       ['Comprometido', T.comprometido, C.ink],
       ['Pagado', T.pagado, C.ink],
       ['Pendiente de pago', T.pendiente, C.ambar],
-      [T.disponible.valor < 0 ? 'Exceso sobre presupuesto' : 'Disponible para contratar', { ...T.disponible, valor: Math.abs(T.disponible.valor) }, T.disponible.valor < 0 ? C.rojo : C.verde],
+      [T.disponible.valor < 0 ? 'Exceso sobre presupuesto' : 'Disponible para contratar', { ...T.disponible, valor: T.disponible.valor == null ? null : Math.abs(T.disponible.valor) }, T.disponible.valor < 0 ? C.rojo : C.verde],
       ['Diferencia de cambio', { valor: T.difCambio, faltantes: T.difCambio == null ? [1] : [] }, C.gris],
     ];
     const kx = L + 160, kw = (AW - 160) / 2, kh = 40;
@@ -101,7 +101,7 @@ export function generarPdf(inf) {
       + 'Disponible = presupuesto vigente - comprometido de rubros presupuestados. '
       + (p.criterio === 'historico' ? 'Histórico: comprometido a la cotización BNA de su fecha, pagos a la de su fecha y saldo a la del compromiso; la diferencia de cambio concilia las cifras.' : 'Manual: todos los equivalentes con un único valor.')
       + (T.rubrosSinPresupuesto.length ? ` Rubros sin presupuestar: ${T.rubrosSinPresupuesto.join(', ')}.` : '')
-      + (inf.completo ? '' : ' (*) importe incompleto.'), L, y, { width: AW });
+      + (inf.completo ? '' : ' (*) importe incompleto.') + (p.notaFiltros ? ` ${p.notaFiltros}` : ''), L, y, { width: AW });
     y = doc.y + 10;
 
     // ── Desvíos ───────────────────────────────────────────────────────────
@@ -150,12 +150,13 @@ export function generarPdf(inf) {
         fmt(r.comprometido.valor) + (r.comprometido.faltantes.length ? '*' : ''),
         fmt(r.pagado.valor) + (r.pagado.faltantes.length ? '*' : ''),
         fmt(r.pendiente.valor) + (r.pendiente.faltantes.length ? '*' : ''),
-        disp == null ? '—' : (disp < 0 ? `-${fmt(-disp)}` : fmt(disp)),
+        r.disponible?.faltantes.length ? 'incompleto *' : disp == null ? '—' : (disp < 0 ? `-${fmt(-disp)}` : fmt(disp)),
         r.avance == null ? 'Sin avance' : pct(r.avance),
       ], { bg: i % 2 ? C.fondo : null, colors: [null, null, null, null, null, disp != null && disp < 0 ? C.rojo : null, r.avance == null ? C.gris : null] });
     });
-    fila(['TOTAL OBRA', fmt(T.presupuesto.valor), fmt(T.comprometido.valor), fmt(T.pagado.valor), fmt(T.pendiente.valor),
-      T.disponible.valor < 0 ? `-${fmt(-T.disponible.valor)}` : fmt(T.disponible.valor), av.estado === 'ok' ? pct(av.valor) : 'Pend. pond.'],
+    const m = (t) => (t.faltantes.length ? ' *' : '');
+    fila(['TOTAL OBRA', fmt(T.presupuesto.valor) + m(T.presupuesto), fmt(T.comprometido.valor) + m(T.comprometido), fmt(T.pagado.valor) + m(T.pagado), fmt(T.pendiente.valor) + m(T.pendiente),
+      T.disponible.valor == null ? 'incompleto *' : T.disponible.valor < 0 ? `-${fmt(-T.disponible.valor)}` : fmt(T.disponible.valor), av.estado === 'ok' ? pct(av.valor) : 'Pend. pond.'],
     { bold: true, bg: '#E6E5E1' });
 
     // ── Por tipo de gasto (si entra o página siguiente) ───────────────────
@@ -172,7 +173,8 @@ export function generarPdf(inf) {
         y += 15;
       };
       tfila(['Tipo de gasto', 'Comprometido', 'Pagado', 'Pendiente'], { bg: C.ink, color: '#FFFFFF', bold: true });
-      inf.tipos.forEach((t, i) => tfila([t.nombre, fmt(t.comprometido.valor), fmt(t.pagado.valor), fmt(t.pendiente.valor)], { bg: i % 2 ? C.fondo : null }));
+      const mt = (t) => (t.faltantes.length ? ' *' : '');
+      inf.tipos.forEach((t, i) => tfila([t.nombre, fmt(t.comprometido.valor) + mt(t.comprometido), fmt(t.pagado.valor) + mt(t.pagado), fmt(t.pendiente.valor) + mt(t.pendiente)], { bg: i % 2 ? C.fondo : null }));
     }
 
     // Pie en cada página

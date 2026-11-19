@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useParams, Link } from 'react-router-dom';
 import { api, hoyISO, ESTADO_OBRA } from '../lib.js';
-import { ObraCtx, useAuth } from '../ctx.js';
+import { ObraCtx, useAuth, useToast } from '../ctx.js';
 import { Aviso, Chip } from '../components/ui.jsx';
 import GastoForm from '../components/GastoForm.jsx';
 import PagoForm from '../components/PagoForm.jsx';
@@ -16,13 +16,15 @@ const leerVista = (id) => {
 export default function ObraLayout() {
   const { obraId } = useParams();
   const { user } = useAuth();
+  const toast = useToast();
   const [obra, setObra] = useState(null);
   const [error, setError] = useState(null);
   const [vista, setVistaState] = useState(() => leerVista(obraId));
   const [version, setVersion] = useState(0);
   const [modal, setModal] = useState(null); // {tipo, ...opciones}
 
-  const recargarObra = useCallback(() => api(`/api/obras/${obraId}`).then(setObra).catch((e) => setError(e)), [obraId]);
+  const recargarObra = useCallback(() => api(`/api/obras/${obraId}`).then(setObra)
+    .catch((e) => setObra((actual) => { if (actual) { toast(e.message, 'error'); return actual; } setError(e); return actual; })), [obraId]);
   useEffect(() => { setObra(null); setError(null); setVistaState(leerVista(obraId)); recargarObra(); }, [obraId, recargarObra]);
   const setVista = (v) => setVistaState((prev) => {
     const n = { ...prev, ...v };

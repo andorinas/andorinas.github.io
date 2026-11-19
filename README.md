@@ -22,7 +22,7 @@ Requiere Node.js 22 (en esta PC: portable en `%LOCALAPPDATA%\Programs\node`).
 
 ```bash
 npm install
-npm test          # 18 pruebas: aceptación A–G, cotizaciones, seguridad (RLS) e instalación
+npm test          # 33 pruebas: aceptación A–G, cotizaciones, seguridad (RLS), revisión independiente e instalación
 npm run dev       # app en http://localhost:5173 (necesita .env con los datos de Supabase, ver .env.example)
 npm run build     # compila a client/dist
 npm run sql       # regenera supabase/instalar.sql a partir de las migraciones
@@ -37,7 +37,8 @@ client/                 app React (Vite). src/datos.js = acceso a Supabase
 shared/calc.js          motor de cálculo único
 shared/exports/         PDF ejecutivo y Excel (navegador y pruebas)
 supabase/migraciones/   esquema, seguridad (RLS), reglas de negocio, almacenamiento, permisos
-supabase/instalar.sql   todo junto para pegar en el SQL Editor de Supabase
+supabase/instalar.sql   todo junto para pegar en el SQL Editor de Supabase (proyecto nuevo)
+supabase/actualizar.sql cambios para una base ya instalada (re-ejecutable, no borra datos)
 tests/                  pruebas automáticas
 .github/workflows/      publicar en GitHub Pages y mantener activa la base
 _version-servidor/      versión anterior con servidor Node propio (no se publica; sirve si algún día se usa Fly.io)

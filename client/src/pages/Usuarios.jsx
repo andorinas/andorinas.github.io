@@ -17,7 +17,13 @@ export default function Usuarios() {
   useEffect(() => { cargar(); api('/api/obras').then(setObras); }, []);
 
   const patch = async (u, body, msg) => { try { await api(`/api/usuarios/${u.id}`, { method: 'PATCH', body }); toast(msg); cargar(); } catch (e) { toast(e.message, 'error'); } };
-  const toggleObra = (u, oid) => patch(u, { obras: u.obras.includes(oid) ? u.obras.filter((x) => x !== oid) : [...u.obras, oid] }, 'Asignación actualizada');
+  const [guardando, setGuardando] = useState(false);
+  const toggleObra = async (u, oid) => {
+    if (guardando) return;
+    setGuardando(true);
+    try { await patch(u, { obras: u.obras.includes(oid) ? u.obras.filter((x) => x !== oid) : [...u.obras, oid] }, 'Asignación actualizada'); }
+    finally { setGuardando(false); }
+  };
   const pendientes = lista.filter((u) => u.rol === 'pendiente' && u.activo);
   const enlace = window.location.href.split('#')[0];
 

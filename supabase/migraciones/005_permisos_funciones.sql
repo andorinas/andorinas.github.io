@@ -24,4 +24,4 @@ grant execute on function public._obra_de_ruta(text), public.puede_ver_obra(bigi
 grant execute on function public.ping() to anon, authenticated;
 
 -- Que futuras funciones tampoco queden abiertas por defecto.
-alter default privileges in schema public revoke execute on functions from public, anon;
+-- (ver 006: los privilegios por defecto se ajustan "for role postgres", que es quien crea las funciones)

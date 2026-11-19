@@ -9,7 +9,7 @@ const nfp = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 const nfTc = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
 export const money = (c, m) => (c == null ? '—' : `${m} ${nf2.format(c / 100)}`);
-export const money0 = (c, m) => (c == null ? '—' : `${c < 0 ? '−' : ''}${m} ${nf0.format(Math.abs(Math.round(c / 100)))}`);
+export const money0 = (c, m) => (c == null ? '—' : `${Math.round(c / 100) < 0 ? '−' : ''}${m} ${nf0.format(Math.abs(Math.round(c / 100)))}`);
 export const numero = (c) => nf2.format(c / 100);
 export const pct = (v) => (v == null ? '—' : `${nfp.format(v)} %`);
 export const tc = (v) => (v == null ? '—' : `ARS ${nfTc.format(v)} por USD`);
@@ -39,6 +39,7 @@ export function parseDecimal(txt) {
   let s = String(txt).trim().replace(/\s|ARS|%/gi, '');
   if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
   else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ''); // "1.550" = mil quinientos cincuenta
+  if (!/^d+(.d+)?$/.test(s)) return null;
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }

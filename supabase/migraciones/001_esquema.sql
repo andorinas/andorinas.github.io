@@ -124,6 +124,7 @@ create table public.compromisos (
   anulado        boolean not null default false,
   anulado_motivo text,
   clave_idem     text unique,
+  clave_hash     text,
   creado_por     uuid references public.perfiles(id),
   creado_en      timestamptz not null default now(),
   modificado_en  timestamptz
@@ -146,6 +147,7 @@ create table public.pagos (
   anulado           boolean not null default false,
   anulado_motivo    text,
   clave_idem        text unique,
+  clave_hash        text,
   creado_por        uuid references public.perfiles(id),
   creado_en         timestamptz not null default now(),
   modificado_en     timestamptz
@@ -165,6 +167,7 @@ create table public.avances (
   anulado        boolean not null default false,
   anulado_motivo text,
   clave_idem     text unique,
+  clave_hash     text,
   creado_por     uuid references public.perfiles(id),
   creado_en      timestamptz not null default now()
 );

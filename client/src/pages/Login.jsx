@@ -7,7 +7,8 @@ export default function Login() {
   const { setUser } = useAuth();
   const [modo, setModo] = useState('ingresar');
   const [f, setF] = useState({ email: '', password: '', nombre: '' });
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(() => (new URLSearchParams(window.location.search).has('code')
+    ? 'No se pudo usar el enlace del email: abrilo en el mismo navegador donde lo pediste, o pedí uno nuevo con “Olvidé mi contraseña”.' : null));
   const [aviso, setAviso] = useState(null);
   const [cargando, run] = useCargando();
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });

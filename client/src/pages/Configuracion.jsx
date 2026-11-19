@@ -3,12 +3,13 @@ import { api, money, dmy, dmyHora, tc, hoyISO, ESTADO_OBRA } from '../lib.js';
 import { useObra, useToast } from '../ctx.js';
 import { Campo, FechaInput, ImporteInput, Segmentado, Aviso, Chip, useCargando } from '../components/ui.jsx';
 
-function PresupuestoRubro({ rubro, onCambio }) {
+function PresupuestoRubro({ rubro, onCambio, inicioObra }) {
   const toast = useToast();
   const actual = rubro.presupuestoActual;
   const [abierto, setAbierto] = useState(false);
   const [hist, setHist] = useState(null);
-  const [f, setF] = useState({ moneda: actual?.moneda || 'ARS', importe: null, fecha_ref: hoyISO(), vigente_desde: hoyISO(), motivo: '' });
+  // El primer presupuesto rige desde el inicio de la obra (cuenta para fechas de corte pasadas); los cambios, desde hoy.
+  const [f, setF] = useState({ moneda: actual?.moneda || 'ARS', importe: null, fecha_ref: hoyISO(), vigente_desde: actual ? hoyISO() : inicioObra, motivo: '' });
   const [error, setError] = useState(null);
   const [cargando, run] = useCargando();
   const verHist = async () => setHist(hist ? null : await api(`/api/rubros/${rubro.id}/presupuestos`));
@@ -96,7 +97,8 @@ export default function Configuracion() {
     catch (err) { toast(err.message, 'error'); }
   });
   const toggleRubro = async (r) => {
-    await api(`/api/rubros/${r.id}`, { method: 'PATCH', body: { activo: !r.activo } }); refrescar();
+    try { await api(`/api/rubros/${r.id}`, { method: 'PATCH', body: { activo: !r.activo } }); toast(r.activo ? 'Rubro desactivado' : 'Rubro reactivado: definí su peso en Avance'); refrescar(); }
+    catch (e) { toast(e.message, 'error'); }
   };
   const renombrar = async (r) => {
     const n = window.prompt('Nuevo nombre del rubro', r.nombre);
@@ -104,8 +106,8 @@ export default function Configuracion() {
   };
   const agregarTipo = async () => {
     if (!nuevoTipo.trim()) return;
-    await api('/api/tipos', { method: 'POST', body: { nombre: nuevoTipo } });
-    setNuevoTipo(''); setTipos((await api('/api/catalogo')).tipos); toast('Tipo de gasto agregado');
+    try { await api('/api/tipos', { method: 'POST', body: { nombre: nuevoTipo } }); setNuevoTipo(''); setTipos((await api('/api/catalogo')).tipos); toast('Tipo de gasto agregado'); }
+    catch (e) { toast(e.message, 'error'); }
   };
   const activos = obra.rubros.filter((r) => r.activo);
 
@@ -114,7 +116,7 @@ export default function Configuracion() {
       <section className="panel">
         <h2>Presupuesto por rubro</h2>
         <p className="texto-suave chico">Cada modificación crea una versión nueva y conserva la anterior con fecha, usuario y motivo.</p>
-        <ul className="lista-pres">{activos.map((r) => <PresupuestoRubro key={r.id} rubro={r} onCambio={() => { recargarObra(); refrescar(); }} />)}</ul>
+        <ul className="lista-pres">{activos.map((r) => <PresupuestoRubro key={r.id} rubro={r} inicioObra={obra.fecha_inicio} onCambio={() => { recargarObra(); refrescar(); }} />)}</ul>
       </section>
 
       <section className="panel">

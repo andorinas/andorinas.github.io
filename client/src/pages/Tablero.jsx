@@ -86,7 +86,7 @@ export default function Tablero() {
               <Kpi titulo="¿Cuánto comprometimos?" valor={v(T.comprometido, M)} sub={`Presupuesto vigente ${v(T.presupuesto, M)}`} onClick={() => ir({})} />
               <Kpi titulo="¿Cuánto pagamos?" valor={v(T.pagado, M)} onClick={() => ir({})} />
               <Kpi titulo="¿Cuánto debemos?" valor={v(T.pendiente, M)} tono="alerta" onClick={() => ir({ estadoPago: 'adeudado' })} />
-              <Kpi titulo={disp < 0 ? 'Exceso sobre presupuesto' : 'Disponible para contratar'} valor={money0(Math.abs(disp), M) + (T.disponible.faltantes.length ? ' *' : '')} tono={disp < 0 ? 'error' : 'ok'}
+              <Kpi titulo={disp < 0 ? 'Exceso sobre presupuesto' : 'Disponible para contratar'} valor={disp == null ? 'Incompleto *' : money0(Math.abs(disp), M)} tono={disp == null ? null : disp < 0 ? 'error' : 'ok'}
                 sub={T.rubrosSinPresupuesto.length ? `Sin presupuestar: ${T.rubrosSinPresupuesto.join(', ')}` : 'Presupuesto vigente − comprometido'} />
               {T.difCambio != null && T.difCambio !== 0 && (
                 <Kpi titulo="Diferencia de cambio" valor={money0(T.difCambio, M)}
@@ -123,7 +123,7 @@ export default function Tablero() {
                         <tbody>
                           {inf.rubros.map((r) => (
                             <tr key={r.id} className={r.exceso > 0 ? 'fila-exceso' : ''}>
-                              <th scope="row">{r.nombre}{r.peso != null && <span className="peso">peso {pct(r.peso)}</span>}</th>
+                              <th scope="row">{r.nombre}{r.inactivo && <span className="peso">rubro desactivado</span>}{r.peso != null && <span className="peso">peso {pct(r.peso)}</span>}</th>
                               <td>{r.sinPresupuesto ? <span className="texto-suave">Sin presupuestar</span> : <span title={r.presupuestoVersion ? `Versión ${r.presupuestoVersion.version}: ${r.presupuestoVersion.moneda} original` : ''}>{v(r.presupuesto, M)}</span>}</td>
                               <td><button className="celda-link" onClick={() => ir({ rubroId: r.id })}>{v(r.comprometido, M)}</button></td>
                               <td><button className="celda-link" onClick={() => ir({ rubroId: r.id })}>{v(r.pagado, M)}</button></td>

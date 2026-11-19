@@ -415,3 +415,8 @@ button.kpi { cursor: pointer; } button.kpi:hover { box-shadow: 0 0 0 2px var(--i
 .btn-texto-cab { background: none; border: 0; cursor: pointer; padding: 6px 4px; }
 .solo-celular { display: none; }
 @media (max-width: 639px) { .solo-celular { display: inline-block; } }
+
+/* fecha inválida */
+.fecha-input.invalida input:first-child { border-color: var(--error); background: var(--error-bg); }
+/* aviso de dólar manual visible aunque los controles estén plegados en el celular */
+@media (max-width: 639px) { .controles-vista:not(.abierto) > .aviso-alerta { display: flex; } }

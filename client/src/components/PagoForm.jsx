@@ -64,7 +64,12 @@ export default function PagoForm({ obra, onClose, onListo, compromisoId }) {
       const r = await api(`/api/compromisos/${sel.id}/pagos`, { method: 'POST', body: { ...cuerpo(), adjunto_id, clave_idem: clave } });
       toast(r.duplicado ? 'Ese pago ya estaba registrado (no se duplicó).' : `Pago registrado. Saldo: ${money(r.saldoResultante, sel.moneda)}`);
       onListo();
-    } catch (err) { setError(err.message); setPreview(null); }
+    } catch (err) {
+      setError(err.message);
+      toast(err.message, 'error');
+      // Error de conexión: puede haberse guardado igual. Se mantiene la revisión para reintentar (la clave evita duplicar).
+      if (!err.red) setPreview(null);
+    }
   });
 
   const filtrados = (abiertos || []).filter((c) => `${c.concepto} ${c.proveedor || ''} ${c.rubro}`.toLowerCase().includes(buscar.toLowerCase()));
@@ -122,6 +127,7 @@ export default function PagoForm({ obra, onClose, onListo, compromisoId }) {
           {preview ? (
             <div ref={refConf} className="confirmacion" role="region" aria-label="Confirmar pago">
               <h3>Revisá antes de confirmar</h3>
+              {error && <Aviso tipo="error">{error}</Aviso>}
               <dl>
                 <div><dt>Sale de caja</dt><dd>{money(preview.importe_pagado, preview.moneda_pago)}</dd></div>
                 <div><dt>Cancela de la deuda</dt><dd>{money(preview.importe_cancelado, preview.moneda_compromiso)}</dd></div>

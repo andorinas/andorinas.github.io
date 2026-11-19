@@ -11,7 +11,7 @@ const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'supab
 const STUB_SUPABASE = `
 create role anon nologin; create role authenticated nologin;
 create schema auth;
-create table auth.users (id uuid primary key default gen_random_uuid(), email text not null, raw_user_meta_data jsonb not null default '{}');
+create table auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb not null default '{}', email_confirmed_at timestamptz default now());
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 grant usage on schema auth to anon, authenticated;
 create schema storage;

@@ -11,7 +11,8 @@ const traducir = (msg = '') => {
   if (/Invalid login credentials/i.test(msg)) return 'Email o contraseña incorrectos';
   if (/Email not confirmed/i.test(msg)) return 'Todavía no confirmaste tu email: revisá tu casilla.';
   if (/JWT expired|invalid JWT/i.test(msg)) return 'La sesión venció. Volvé a ingresar.';
-  if (/Failed to fetch|NetworkError/i.test(msg)) return 'Sin conexión con el servidor. Revisá internet y reintentá.';
+  if (/Failed to fetch|NetworkError|Load failed|network/i.test(msg)) return 'Sin conexión con el servidor. Revisá internet y reintentá (si ya se había guardado, no se duplica).';
+  if (/PKCE|code verifier|code_verifier|auth code/i.test(msg)) return 'El enlace del email se abrió en otro navegador. Abrilo en el mismo navegador donde lo pediste, o pedí uno nuevo.';
   if (/rate limit/i.test(msg)) return 'Demasiados intentos. Esperá unos minutos.';
   if (/Password should be at least/i.test(msg)) return 'La contraseña debe tener al menos 8 caracteres.';
   if (/User already registered/i.test(msg)) return 'Ya existe una cuenta con ese email.';
@@ -20,7 +21,9 @@ const traducir = (msg = '') => {
 const chk = ({ data, error }) => {
   if (error) {
     if (/JWT/.test(error.message)) window.dispatchEvent(new Event('sesion-vencida'));
-    throw new ApiError(400, traducir(error.message));
+    const e = new ApiError(400, traducir(error.message));
+    e.red = /Failed to fetch|NetworkError|Load failed|network/i.test(error.message || '');
+    throw e;
   }
   return data;
 };

@@ -80,13 +80,18 @@ function Cabecera() {
 function Pendiente() {
   const { user, logout, setUser } = useAuth();
   const [cargando, run] = useCargando();
+  const [aviso, setAviso] = useState(null);
   return (
     <main className="login"><div className="login-form">
       <Marca />
-      <h1>Cuenta creada</h1>
-      <p>Hola {user.nombre || user.email}. Tu usuario está <strong>pendiente de habilitación</strong>.</p>
+      <h1>{user.activo ? 'Cuenta creada' : 'Acceso desactivado'}</h1>
+      <p>Hola {user.nombre || user.email}. {user.activo ? <>Tu usuario está <strong>pendiente de habilitación</strong>.</> : <>Tu usuario <strong>no está habilitado</strong> para usar la app.</>}</p>
       <p className="texto-suave">Avisale al administrador de Andorinas para que te asigne las obras. Cuando lo haga, tocá “Ya me habilitaron”.</p>
-      <button className="btn btn-primario btn-bloque" disabled={cargando} onClick={() => run(async () => setUser(await perfilActual()))}>Ya me habilitaron</button>
+      {aviso && <Aviso tipo="info">{aviso}</Aviso>}
+      <button className="btn btn-primario btn-bloque" disabled={cargando} onClick={() => run(async () => {
+        try { const p = await perfilActual(); if (p && p.activo && p.rol !== 'pendiente') setUser(p); else setAviso('Todavía no te habilitaron. Probá de nuevo en un rato.'); }
+        catch (e) { setAviso(e.message); }
+      })}>Ya me habilitaron</button>
       <button className="btn btn-fantasma btn-bloque" onClick={logout}>Salir</button>
     </div></main>
   );

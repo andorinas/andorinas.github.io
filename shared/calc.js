@@ -23,10 +23,10 @@ export const completo = (t) => t.faltantes.length === 0;
  * @param {object} vista { moneda, criterio, cotizacionManual }
  * @param {string} ref descripción del registro (para informar faltantes)
  */
-export function equivalente(cents, moneda, tcHistorico, vista, ref) {
+export function equivalente(cents, moneda, tcHistorico, vista, ref, clave = ref) {
   if (moneda === vista.moneda || cents === 0) return { valor: cents, faltantes: [] };
   const tc = vista.criterio === 'manual' ? vista.cotizacionManual : tcHistorico;
-  if (!(tc > 0)) return { valor: null, faltantes: [{ moneda, importe: cents, ref }] };
+  if (!(tc > 0)) return { valor: null, faltantes: [{ moneda, importe: cents, ref, clave }] };
   const v = moneda === 'USD' ? Math.round(cents * tc) : Math.round(cents / tc);
   return { valor: v, faltantes: [] };
 }
@@ -63,7 +63,8 @@ export function avanceGeneral(rubros) {
   const sumaPesos = round2(definidos.reduce((s, r) => s + r.peso, 0));
   const faltaAsignar = round2(100 - sumaPesos);
   const sinAvance = rubros.filter((r) => r.avance == null).map((r) => r.nombre);
-  if (!rubros.length || definidos.length !== rubros.length || Math.abs(sumaPesos - 100) > 0.001) {
+  // Tolerancia de 0,01 punto (p. ej. 33,33 × 3 = 99,99).
+  if (!rubros.length || definidos.length !== rubros.length || Math.abs(sumaPesos - 100) > 0.0101) {
     return { estado: 'pendiente_ponderacion', valor: null, sumaPesos, faltaAsignar, sinAvance };
   }
   const valor = round2(rubros.reduce((s, r) => s + (r.avance ?? 0) * r.peso / 100, 0));
@@ -84,6 +85,10 @@ export function calcularObra(data, p) {
   }
   const corte = p.corte;
   const f = p.filtros || {};
+  // Presupuesto, disponible, exceso y desvíos siempre se miden sobre la obra completa a la fecha de corte:
+  // un filtro de tipo, proveedor, estado o período no puede esconder que un rubro se pasó del presupuesto.
+  const filtrosQueRecortan = ['tipoId', 'proveedorId', 'estadoPago', 'desde'].some((k) => f[k]);
+  const base = filtrosQueRecortan ? calcularObra(data, { ...p, filtros: f.rubroId ? { rubroId: f.rubroId } : {} }) : null;
   const nombreRubro = new Map(data.rubros.map((r) => [r.id, r.nombre]));
   const nombreTipo = new Map(data.tipos.map((t) => [t.id, t.nombre]));
   const nombreProv = new Map((data.proveedores || []).map((t) => [t.id, t.nombre]));
@@ -111,14 +116,19 @@ export function calcularObra(data, p) {
     if (f.estadoPago && f.estadoPago !== estado && !(f.estadoPago === 'adeudado' && pendiente > 0)) continue;
 
     const ref = `${c.concepto} (${c.fecha})`;
-    const comprometido = eqTotal(c.importe, c.moneda, c.cot_valor, vista, ref);
+    const comprometido = eqTotal(c.importe, c.moneda, c.cot_valor, vista, ref, `c${c.id}`);
     const pagado = total();
     const pagosOut = pagos.map((pg) => {
-      const eq = equivalente(pg.importe_pagado, pg.moneda_pago, pg.cot_valor, vista, `Pago ${ref} del ${pg.fecha}`);
+      const eq = equivalente(pg.importe_pagado, pg.moneda_pago, pg.cot_valor, vista, `Pago ${ref} del ${pg.fecha}`, `p${pg.id}`);
       sumInto(pagado, eq);
       return { ...pg, equivalente: eq.valor };
     });
-    const pend = eqTotal(pendiente, c.moneda, c.cot_valor, vista, `Saldo ${ref}`);
+    const pend = eqTotal(pendiente, c.moneda, c.cot_valor, vista, `Saldo ${ref}`, `c${c.id}`);
+    // Dólar manual con pagos en la misma moneda: un único valor para todo => sin diferencia de cambio
+    // (evita una diferencia "fantasma" de 1 centavo por redondeo).
+    if (vista.criterio === 'manual' && pagos.every((pg) => pg.moneda_pago === c.moneda) && completo(comprometido) && completo(pagado)) {
+      pend.valor = comprometido.valor - pagado.valor;
+    }
     // Diferencia de cambio: lo que hace falta para conciliar comprometido = pagado + pendiente − dif.
     // Positiva = mayor costo efectivo; negativa = ahorro por tipo de cambio.
     const difCambio = completo(comprometido) && completo(pagado) && completo(pend)
@@ -133,15 +143,19 @@ export function calcularObra(data, p) {
   }
 
   // ── Por rubro ─────────────────────────────────────────────────────────────
-  const rubrosActivos = data.rubros.filter((r) => r.activo !== 0 && r.activo !== false).sort((a, b) => a.orden - b.orden || a.id - b.id);
-  const rubrosVisibles = f.rubroId ? rubrosActivos.filter((r) => r.id === Number(f.rubroId)) : rubrosActivos;
+  const esActivo = (r) => r.activo !== 0 && r.activo !== false;
+  const orden = (a, b) => a.orden - b.orden || a.id - b.id;
+  const rubrosActivos = data.rubros.filter(esActivo).sort(orden);
+  // Un rubro desactivado que tiene movimientos se sigue mostrando: la suma por rubro debe dar el total.
+  const rubrosTabla = data.rubros.filter((r) => esActivo(r) || movimientos.some((m) => m.rubro_id === r.id)).sort(orden);
+  const rubrosVisibles = f.rubroId ? rubrosTabla.filter((r) => r.id === Number(f.rubroId)) : rubrosTabla;
 
   const filasRubro = rubrosVisibles.map((r) => {
     const movs = movimientos.filter((m) => m.rubro_id === r.id);
     const versiones = data.presupuestos.filter((v) => v.rubro_id === r.id);
     const pv = presupuestoVigente(versiones, corte);
     const presupuesto = pv
-      ? eqTotal(pv.importe, pv.moneda, pv.cot_valor, vista, `Presupuesto ${r.nombre}`)
+      ? eqTotal(pv.importe, pv.moneda, pv.cot_valor, vista, `Presupuesto ${r.nombre}`, `b${pv.id}`)
       : null;
     const comprometido = total(), pagado = total(), pendiente = total();
     let difCambio = 0, difCompleta = true;
@@ -151,11 +165,13 @@ export function calcularObra(data, p) {
     }
     let disponible = null;
     if (presupuesto) {
-      disponible = { valor: presupuesto.valor - comprometido.valor, faltantes: [...presupuesto.faltantes, ...comprometido.faltantes] };
+      const falt = [...presupuesto.faltantes, ...comprometido.faltantes];
+      // Si falta convertir algo, no se muestra un disponible/exceso parcial como si fuera completo.
+      disponible = { valor: falt.length ? null : presupuesto.valor - comprometido.valor, faltantes: falt };
     }
     const av = avanceVigente(data.avances.filter((a) => a.rubro_id === r.id), corte);
     return {
-      id: r.id, nombre: r.nombre, peso: r.peso ?? null,
+      id: r.id, nombre: r.nombre, peso: r.peso ?? null, inactivo: !esActivo(r),
       presupuesto, presupuestoVersion: pv ? { version: pv.version, moneda: pv.moneda, importe: pv.importe, fecha_ref: pv.fecha_ref, cot_valor: pv.cot_valor, cot_fecha: pv.cot_fecha, cot_estado: pv.cot_estado } : null,
       sinPresupuesto: !pv,
       comprometido, pagado, pendiente, disponible,
@@ -187,13 +203,24 @@ export function calcularObra(data, p) {
   // Disponible total: presupuesto de rubros presupuestados − comprometido de esos mismos rubros.
   const compPresupuestados = total();
   for (const r of conPresupuesto) sumInto(compPresupuestados, r.comprometido);
-  T.disponible = { valor: T.presupuesto.valor - compPresupuestados.valor, faltantes: [...T.presupuesto.faltantes, ...compPresupuestados.faltantes] };
+  const faltDisp = [...T.presupuesto.faltantes, ...compPresupuestados.faltantes];
+  T.disponible = { valor: faltDisp.length ? null : T.presupuesto.valor - compPresupuestados.valor, faltantes: faltDisp };
   T.rubrosSinPresupuesto = filasRubro.filter((r) => r.sinPresupuesto).map((r) => r.nombre);
   T.comprometidoSinPresupuesto = filasRubro.filter((r) => r.sinPresupuesto).reduce((s, r) => s + r.comprometido.valor, 0);
 
   const faltantes = dedupe([...T.presupuesto.faltantes, ...T.comprometido.faltantes, ...T.pagado.faltantes, ...T.pendiente.faltantes]);
 
-  const desvios = filasRubro
+  if (base) {
+    // Presupuesto / disponible / exceso desde la obra completa (ver arriba).
+    for (const r of filasRubro) {
+      const b = base.rubros.find((x) => x.id === r.id);
+      if (b) Object.assign(r, { presupuesto: b.presupuesto, disponible: b.disponible, exceso: b.exceso, sinPresupuesto: b.sinPresupuesto, comprometidoObra: b.comprometido });
+    }
+    T.presupuesto = base.totales.presupuesto;
+    T.disponible = base.totales.disponible;
+  }
+
+  const desvios = base ? base.desvios : filasRubro
     .filter((r) => r.exceso > 0 || (r.sinPresupuesto && r.comprometido.valor > 0))
     .map((r) => ({ id: r.id, nombre: r.nombre, exceso: r.exceso, sinPresupuesto: r.sinPresupuesto, comprometido: r.comprometido.valor,
       presupuesto: r.presupuesto?.valor ?? null, pct: r.presupuesto?.valor ? round2((r.comprometido.valor / r.presupuesto.valor - 1) * 100) : null }));
@@ -204,14 +231,15 @@ export function calcularObra(data, p) {
     return { id: r.id, nombre: r.nombre, peso: r.peso ?? null, avance: av ? av.porcentaje : null };
   });
 
-  const usaCotizacionesPendientes = data.compromisos.some((c) => c.cot_estado === 'pendiente' && !c.anulado)
-    || data.pagos.some((x) => x.cot_estado === 'pendiente' && !x.anulado)
-    || data.presupuestos.some((x) => x.cot_estado === 'pendiente');
+  // Sólo cuenta lo que entra en esta vista (fecha de corte y filtros), no versiones viejas ni registros fuera del período.
+  const usaCotizacionesPendientes = movimientos.some((m) => m.cot_estado === 'pendiente' || m.pagos.some((x) => x.cot_estado === 'pendiente'))
+    || filasRubro.some((r) => r.presupuestoVersion?.cot_estado === 'pendiente');
 
   return {
     parametros: {
       moneda: vista.moneda, criterio: vista.criterio, cotizacionManual: vista.criterio === 'manual' ? vista.cotizacionManual : null,
       corte, filtros: describirFiltros(f, nombreRubro, nombreTipo, nombreProv), filtrosRaw: f,
+      notaFiltros: base ? 'Presupuesto, disponible y desvíos se calculan sobre la obra completa a la fecha de corte; los filtros sólo recortan comprometido, pagado y pendiente.' : null,
     },
     obra: { id: data.obra.id, nombre: data.obra.nombre, ubicacion: data.obra.ubicacion, estado: data.obra.estado, fecha_inicio: data.obra.fecha_inicio },
     totales: T,
@@ -233,7 +261,8 @@ export function calcularObra(data, p) {
 
 function dedupe(arr) {
   const seen = new Set();
-  return arr.filter((x) => { const k = `${x.ref}|${x.moneda}|${x.importe}`; if (seen.has(k)) return false; seen.add(k); return true; });
+  // Por registro (no por texto): dos compras idénticas sin cotización son dos faltantes distintos.
+  return arr.filter((x) => { const k = x.clave; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
 const ESTADOS = { pagado: 'Pagado', parcial: 'Pago parcial', pendiente: 'Pendiente', vencido: 'Vencido', adeudado: 'Con saldo' };

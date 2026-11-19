@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { isValidElement, useEffect, useId, useRef, useState } from 'react';
 import { dmy, parseDMY, parseImporte, numero } from '../lib.js';
 
 export const LOGO_EDIFICIOS = 'M8 56 V36 H18 V56 M18 56 V18 H28 V10 H36 V56 M36 56 V28 H46 V36 H52 V56 M4 56 H60 M22 24 V52 M32 16 V52 M41 34 V52';
@@ -49,14 +49,19 @@ export function Sheet({ titulo, obra, onClose, children, ancho }) {
   );
 }
 
+/** Campo con etiqueta. Sólo usa <label> si el hijo es un input/select/textarea simple: dentro de un <label>,
+ *  tocar el texto activa el primer botón de un selector (p. ej. cambiaba la condición de pago a "Contado"). */
 export function Campo({ label, hint, error, children, req }) {
+  const id = useId();
+  const simple = isValidElement(children) && ['input', 'select', 'textarea'].includes(children.type);
+  const Tag = simple ? 'label' : 'div';
   return (
-    <label className={`campo ${error ? 'con-error' : ''}`}>
-      <span className="campo-label">{label}{req && <span className="req"> *</span>}</span>
+    <Tag className={`campo ${error ? 'con-error' : ''}`} {...(simple ? {} : { role: 'group', 'aria-labelledby': id })}>
+      <span className="campo-label" id={id}>{label}{req && <span className="req"> *</span>}</span>
       {children}
       {hint && !error && <span className="campo-hint">{hint}</span>}
       {error && <span className="campo-error">{error}</span>}
-    </label>
+    </Tag>
   );
 }
 
@@ -73,17 +78,24 @@ export function Segmentado({ value, onChange, opciones, nombre, chico }) {
 /** Fecha en formato DD/MM/AAAA con botón de calendario nativo. value/onChange en ISO. */
 export function FechaInput({ value, onChange, id, required, max }) {
   const [txt, setTxt] = useState(dmy(value));
+  const [invalida, setInvalida] = useState(false);
   const nativo = useRef(null);
-  useEffect(() => { setTxt(dmy(value)); }, [value]);
-  const mask = (s) => {
-    const d = s.replace(/\D/g, '').slice(0, 8);
-    return [d.slice(0, 2), d.slice(2, 4), d.slice(4, 8)].filter(Boolean).join('/');
+  useEffect(() => { if (value) { setTxt(dmy(value)); setInvalida(false); } }, [value]);
+  const cambiar = (s) => {
+    const t = normalizarFecha(s); setTxt(t);
+    const iso = parseDMY(t);
+    if (iso && iso >= '1990-01-01' && iso <= '2100-12-31') { setInvalida(false); onChange(iso); }
+    else if (!t) { setInvalida(false); onChange(''); }
+    else if (t.length >= 10) { setInvalida(true); onChange(null); }
   };
   return (
-    <div className="fecha-input">
-      <input id={id} inputMode="numeric" placeholder="DD/MM/AAAA" value={txt} required={required}
-        onChange={(e) => { const t = mask(e.target.value); setTxt(t); const iso = parseDMY(t); if (iso) onChange(iso); else if (!t) onChange(''); }}
-        onBlur={() => setTxt(dmy(value))} />
+    <div className={`fecha-input ${invalida ? 'invalida' : ''}`}>
+      <input id={id} inputMode="numeric" placeholder="DD/MM/AAAA" value={txt} required={required} aria-invalid={invalida}
+        onChange={(e) => cambiar(e.target.value)}
+        onBlur={() => {
+          // Fecha incompleta o inválida: queda marcada y el formulario no la toma (no se guarda otra fecha en silencio).
+          if (txt && !parseDMY(txt)) { setInvalida(true); onChange(null); } else if (value) setTxt(dmy(value));
+        }} />
       <button type="button" className="btn-icono" aria-label="Abrir calendario"
         onClick={() => { try { nativo.current.showPicker(); } catch { nativo.current.focus(); } }}>📅</button>
       <input ref={nativo} type="date" tabIndex={-1} aria-hidden="true" className="oculto-nativo" value={value || ''} max={max}
@@ -108,8 +120,33 @@ export function ImporteInput({ value, onChange, moneda, id, placeholder = '0,00'
   );
 }
 
+/** "1/6/2025", "01062025", "2025-06-15" (pegado) -> "DD/MM/AAAA" mientras se escribe. */
+export function normalizarFecha(s) {
+  const t = String(s).trim();
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+  if (iso) return `${iso[3].padStart(2, '0')}/${iso[2].padStart(2, '0')}/${iso[1]}`;
+  if (/[/.-]/.test(t)) {
+    const p = t.split(/[/.-]/).slice(0, 3).map((x) => x.replace(/\D/g, ''));
+    return p.map((x, i) => (i < 2 && x.length === 1 && i < p.length - 1 ? x.padStart(2, '0') : x.slice(0, i < 2 ? 2 : 4))).join('/');
+  }
+  const d = t.replace(/\D/g, '').slice(0, 8);
+  return [d.slice(0, 2), d.slice(2, 4), d.slice(4, 8)].filter(Boolean).join('/');
+}
+
+/** Aviso. Si es de error, se hace visible solo (scroll + foco) cada vez que cambia el mensaje:
+ *  en el celular el formulario suele estar desplazado y el error quedaba fuera de la pantalla. */
 export function Aviso({ tipo = 'info', children, accion }) {
-  return <div className={`aviso aviso-${tipo}`} role={tipo === 'error' ? 'alert' : 'status'}><div>{children}</div>{accion}</div>;
+  const ref = useRef(null);
+  const ultimo = useRef('');
+  useEffect(() => {
+    const txt = ref.current?.textContent || '';
+    if (tipo === 'error' && txt && txt !== ultimo.current) {
+      ref.current.scrollIntoView({ block: 'nearest' });
+      ref.current.focus({ preventScroll: true });
+    }
+    ultimo.current = txt;
+  });
+  return <div ref={ref} tabIndex={-1} className={`aviso aviso-${tipo}`} role={tipo === 'error' ? 'alert' : 'status'}><div>{children}</div>{accion}</div>;
 }
 
 export function Chip({ tipo = 'neutro', children }) { return <span className={`chip chip-${tipo}`}>{children}</span>; }

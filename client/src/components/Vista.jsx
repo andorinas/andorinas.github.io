@@ -38,8 +38,10 @@ export function ControlesVista() {
   const guardarManual = () => run(async () => {
     const v = parseDecimal(txt);
     if (!(v > 0)) return toast('La cotización manual debe ser un número positivo', 'error');
-    await api(`/api/obras/${obra.id}/cotizacion-manual`, { method: 'PUT', body: { valor: v } });
-    await recargarObra(); setEditando(false); toast(`Dólar manual: ${tc(v)}`);
+    try {
+      await api(`/api/obras/${obra.id}/cotizacion-manual`, { method: 'PUT', body: { valor: v } });
+      await recargarObra(); setEditando(false); toast(`Dólar manual: ${tc(v)}`);
+    } catch (e) { toast(e.message, 'error'); }
   });
   const sinManual = vista.criterio === 'manual' && !obra.cotizacion_manual;
   return (
@@ -92,6 +94,7 @@ export function DescripcionVista({ inf }) {
       <span>Moneda <strong>{p.moneda}</strong></span>
       <span>{p.criterio === 'manual' ? <>Dólar manual <strong>{tc(p.cotizacionManual)}</strong></> : <>Criterio <strong>BNA vendedor histórico</strong></>}</span>
       {p.filtros.length > 0 && <span>Filtros: <strong>{p.filtros.join(' · ')}</strong></span>}
+      {p.notaFiltros && <span className="chico">{p.notaFiltros}</span>}
     </div>
   );
 }
@@ -122,8 +125,10 @@ export function BotonesExportar({ q }) {
   const hacer = (tipo, compartir) => run(async () => {
     try {
       const file = await generarArchivo(obra.id, params, tipo);
-      if (compartir && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: `Informe ${obra.nombre}` });
-      else descargar(file);
+      if (compartir && navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: `Informe ${obra.nombre}` }); }
+        catch (e) { if (e.name === 'AbortError') return; descargar(file); toast('No se pudo abrir “Compartir”: el PDF se descargó.'); }
+      } else descargar(file);
     } catch (e) { if (e.name !== 'AbortError') toast(e.message, 'error'); }
   });
   return (

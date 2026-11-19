@@ -1,0 +1,621 @@
+-- ControlAr · 003 · Reglas de negocio (funciones RPC)
+-- Todas las escrituras pasan por estas funciones SECURITY DEFINER, que validan permisos y reglas
+-- en el servidor de base de datos. La app sólo puede leer (RLS) y llamar a estas funciones.
+
+-- ── Utilidades internas ─────────────────────────────────────────────────────
+create or replace function public._error(p_msg text) returns void language plpgsql as $$
+begin raise exception using message = p_msg, errcode = 'P0001'; end $$;
+
+create or replace function public._fmt(p_cents bigint, p_moneda text) returns text language sql immutable as $$
+  select p_moneda || ' ' || translate(to_char(p_cents / 100.0, 'FM999,999,999,999,990.00'), ',.', '.,');
+$$;
+
+create or replace function public._texto(p jsonb, k text, campo text, max int default 300) returns text language plpgsql as $$
+declare v text := nullif(trim(p ->> k), '');
+begin
+  if v is null then perform _error(campo || ' es obligatorio'); end if;
+  return left(v, max);
+end $$;
+
+create or replace function public._texto_opt(p jsonb, k text, max int default 1000) returns text language sql immutable as $$
+  select left(nullif(trim(p ->> k), ''), max);
+$$;
+
+create or replace function public._fecha(p_txt text, campo text) returns date language plpgsql as $$
+begin
+  if p_txt is null or p_txt !~ '^\d{4}-\d{2}-\d{2}$' then perform _error(campo || ': fecha inválida'); end if;
+  return p_txt::date;
+exception when others then
+  raise exception using message = campo || ': fecha inválida', errcode = 'P0001';
+end $$;
+
+create or replace function public._cents(p_txt text, campo text, cero boolean default false) returns bigint language plpgsql as $$
+declare v bigint;
+begin
+  if p_txt is null or p_txt !~ '^\d{1,15}$' then perform _error(campo || ': importe inválido'); end if;
+  v := p_txt::bigint;
+  if v = 0 and not cero then perform _error(campo || ': importe inválido'); end if;
+  return v;
+end $$;
+
+create or replace function public._moneda(p_txt text) returns text language plpgsql as $$
+begin
+  if p_txt is null or p_txt not in ('ARS', 'USD') then perform _error('Moneda inválida (ARS o USD)'); end if;
+  return p_txt;
+end $$;
+
+create or replace function public._auditar(p_obra bigint, p_entidad text, p_id bigint, p_accion text,
+  p_antes jsonb default null, p_despues jsonb default null, p_motivo text default null) returns void
+language sql security definer set search_path = public as $$
+  insert into auditoria (obra_id, entidad, entidad_id, accion, usuario_id, antes, despues, motivo)
+  values (p_obra, p_entidad, p_id, p_accion, auth.uid(), p_antes, p_despues, p_motivo);
+$$;
+
+create or replace function public._exigir_activo() returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not es_usuario_activo() then perform _error('Tu usuario no está habilitado. Pedile acceso al administrador.'); end if;
+end $$;
+
+create or replace function public._exigir_admin() returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not es_admin() then perform _error('Acción reservada al administrador'); end if;
+end $$;
+
+create or replace function public._exigir_obra(p_obra bigint) returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from obras where id = p_obra) then perform _error('Obra inexistente'); end if;
+  if not puede_ver_obra(p_obra) then perform _error('No tenés acceso a esta obra'); end if;
+end $$;
+
+-- ── Cotizaciones ────────────────────────────────────────────────────────────
+-- Snapshot para un registro. Regla: si la tabla todavía no tiene ninguna cotización con fecha >= la pedida,
+-- no se sabe si ese día hubo publicación => 'pendiente'. Si la tabla cubre la fecha, se toma la publicada
+-- ese día o la última anterior (día sin publicación) e informa la fecha efectiva.
+create or replace function public._cot(p_fecha date) returns jsonb language sql stable security definer set search_path = public as $$
+  select case
+    when not exists (select 1 from cotizaciones where vigente and fecha >= p_fecha)
+      then jsonb_build_object('cot_valor', null, 'cot_fecha', null, 'cot_fuente', null, 'cot_estado', 'pendiente')
+    else coalesce(
+      (select jsonb_build_object('cot_valor', venta, 'cot_fecha', fecha, 'cot_fuente', fuente, 'cot_estado', 'ok')
+         from cotizaciones where vigente and fecha <= p_fecha order by fecha desc limit 1),
+      jsonb_build_object('cot_valor', null, 'cot_fecha', null, 'cot_fuente', null, 'cot_estado', 'pendiente'))
+  end;
+$$;
+
+create or replace function public.cotizacion_para(p_fecha date) returns jsonb language plpgsql stable security definer set search_path = public as $$
+begin
+  perform _exigir_activo();
+  return _cot(p_fecha);
+end $$;
+
+-- Completa los registros con cotización pendiente (sin duplicarlos). Se ejecuta al cargar cotizaciones.
+create or replace function public._completar_cotizaciones() returns int language plpgsql security definer set search_path = public as $$
+declare n int := 0; m int; r record; c jsonb;
+begin
+  for r in select 'compromisos' t, id, fecha f, obra_id from compromisos where cot_estado = 'pendiente'
+     union all select 'pagos', id, fecha, obra_id from pagos where cot_estado = 'pendiente'
+     union all select 'presupuestos', id, fecha_ref, obra_id from presupuestos where cot_estado = 'pendiente'
+  loop
+    c := _cot(r.f);
+    if c ->> 'cot_estado' = 'ok' then
+      execute format('update %I set cot_valor = $1, cot_fecha = $2, cot_fuente = $3, cot_estado = ''ok'' where id = $4 and cot_estado = ''pendiente''', r.t)
+        using (c ->> 'cot_valor')::double precision, (c ->> 'cot_fecha')::date, c ->> 'cot_fuente', r.id;
+      get diagnostics m = row_count;
+      if m > 0 then
+        n := n + 1;
+        perform _auditar(r.obra_id, rtrim(r.t, 's'), r.id, 'cotizacion_completada', null, c);
+      end if;
+    end if;
+  end loop;
+  return n;
+end $$;
+
+-- Carga (o corrige) la cotización de una fecha. Corregir exige motivo y conserva la versión anterior.
+-- p_reaplicar: actualiza los movimientos que habían tomado el valor anterior de esa fecha (corrección de tipeo).
+create or replace function public.cargar_cotizacion(p_fecha date, p_venta double precision, p_motivo text default null, p_reaplicar boolean default true)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_ant cotizaciones; v_id bigint; v_completadas int; v_reapl int := 0; m int;
+begin
+  perform _exigir_admin();
+  if p_fecha is null then perform _error('Fecha inválida'); end if;
+  if p_venta is null or p_venta <= 0 then perform _error('La cotización debe ser un número positivo (ARS por USD)'); end if;
+  select * into v_ant from cotizaciones where fecha = p_fecha and vigente;
+  if found then
+    if v_ant.venta = p_venta then return jsonb_build_object('id', v_ant.id, 'sin_cambios', true); end if;
+    if nullif(trim(p_motivo), '') is null then perform _error('Ya hay una cotización para esa fecha: indicá el motivo de la corrección'); end if;
+    update cotizaciones set vigente = false where id = v_ant.id;
+  end if;
+  insert into cotizaciones (fecha, venta, motivo, cargado_por) values (p_fecha, p_venta, nullif(trim(p_motivo), ''), auth.uid())
+  returning id into v_id;
+  perform _auditar(null, 'cotizacion', v_id, case when v_ant.id is null then 'alta' else 'correccion' end,
+    to_jsonb(v_ant), jsonb_build_object('fecha', p_fecha, 'venta', p_venta), p_motivo);
+  if v_ant.id is not null and p_reaplicar then
+    update compromisos set cot_valor = p_venta where cot_fecha = p_fecha and cot_valor = v_ant.venta; get diagnostics m = row_count; v_reapl := v_reapl + m;
+    update pagos set cot_valor = p_venta where cot_fecha = p_fecha and cot_valor = v_ant.venta; get diagnostics m = row_count; v_reapl := v_reapl + m;
+    update presupuestos set cot_valor = p_venta where cot_fecha = p_fecha and cot_valor = v_ant.venta; get diagnostics m = row_count; v_reapl := v_reapl + m;
+  end if;
+  v_completadas := _completar_cotizaciones();
+  return jsonb_build_object('id', v_id, 'completadas', v_completadas, 'reaplicadas', v_reapl);
+end $$;
+
+-- ── Usuarios ────────────────────────────────────────────────────────────────
+create or replace function public.actualizar_usuario(p_id uuid, p jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+declare v perfiles; o jsonb;
+begin
+  perform _exigir_admin();
+  select * into v from perfiles where id = p_id;
+  if not found then perform _error('Usuario inexistente'); end if;
+  if p ? 'rol' then
+    if p ->> 'rol' not in ('pendiente', 'encargado', 'admin') then perform _error('Rol inválido'); end if;
+    if p_id = auth.uid() and p ->> 'rol' <> 'admin' then perform _error('No podés quitarte el rol de administrador'); end if;
+    update perfiles set rol = p ->> 'rol' where id = p_id;
+  end if;
+  if p ? 'activo' then
+    if p_id = auth.uid() and not (p ->> 'activo')::boolean then perform _error('No podés desactivar tu propio usuario'); end if;
+    update perfiles set activo = (p ->> 'activo')::boolean where id = p_id;
+  end if;
+  if p ? 'nombre' then update perfiles set nombre = left(trim(p ->> 'nombre'), 80) where id = p_id; end if;
+  if p ? 'obras' then
+    delete from obra_usuarios where usuario_id = p_id;
+    for o in select * from jsonb_array_elements(p -> 'obras') loop
+      insert into obra_usuarios (obra_id, usuario_id) values (o::text::bigint, p_id) on conflict do nothing;
+    end loop;
+  end if;
+  perform _auditar(null, 'usuario', 0, 'modificacion', to_jsonb(v), p);
+end $$;
+
+-- ── Obras y rubros ──────────────────────────────────────────────────────────
+create or replace function public._crear_rubro(p_obra bigint, p_nombre text, p_orden int default null) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare v rubros; v_id bigint;
+begin
+  select * into v from rubros where obra_id = p_obra and lower(nombre) = lower(p_nombre);
+  if found then
+    if not v.activo then update rubros set activo = true where id = v.id; end if;
+    return v.id;
+  end if;
+  insert into rubros (obra_id, nombre, orden)
+  values (p_obra, p_nombre, coalesce(p_orden, (select coalesce(max(orden), 0) + 1 from rubros where obra_id = p_obra)))
+  returning id into v_id;
+  insert into rubros_catalogo (nombre) values (p_nombre) on conflict do nothing;
+  return v_id;
+end $$;
+
+create or replace function public.crear_obra(p jsonb) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare v_id bigint; v_nombre text; v_estado text; r text; i int := 0; u jsonb;
+begin
+  perform _exigir_admin();
+  v_nombre := _texto(p, 'nombre', 'Nombre de la obra', 120);
+  v_estado := coalesce(p ->> 'estado', 'en_curso');
+  if v_estado not in ('planificada', 'en_curso', 'pausada', 'finalizada') then perform _error('Estado inválido'); end if;
+  insert into obras (nombre, ubicacion, fecha_inicio, estado, creado_por)
+  values (v_nombre, _texto_opt(p, 'ubicacion', 200), _fecha(p ->> 'fecha_inicio', 'Fecha de inicio'), v_estado, auth.uid())
+  returning id into v_id;
+  for r in select v from (
+      select distinct on (lower(trim(x))) trim(x) v, ord
+      from jsonb_array_elements_text(coalesce(p -> 'rubros', '[]')) with ordinality t(x, ord)
+      where trim(x) <> '' order by lower(trim(x)), ord) s
+    order by ord loop
+    i := i + 1;
+    perform _crear_rubro(v_id, left(r, 80), i);
+  end loop;
+  for u in select * from jsonb_array_elements(coalesce(p -> 'encargados', '[]')) loop
+    insert into obra_usuarios (obra_id, usuario_id) values (v_id, (u #>> '{}')::uuid) on conflict do nothing;
+  end loop;
+  perform _auditar(v_id, 'obra', v_id, 'alta', null, p);
+  return v_id;
+end $$;
+
+create or replace function public.actualizar_obra(p_id bigint, p jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+declare v obras; u jsonb;
+begin
+  perform _exigir_admin();
+  select * into v from obras where id = p_id;
+  if not found then perform _error('Obra inexistente'); end if;
+  update obras set
+    nombre = case when p ? 'nombre' then _texto(p, 'nombre', 'Nombre', 120) else nombre end,
+    ubicacion = case when p ? 'ubicacion' then _texto_opt(p, 'ubicacion', 200) else ubicacion end,
+    fecha_inicio = case when p ? 'fecha_inicio' then _fecha(p ->> 'fecha_inicio', 'Fecha de inicio') else fecha_inicio end,
+    estado = case when p ? 'estado' then p ->> 'estado' else estado end
+  where id = p_id;
+  if p ? 'encargados' then
+    delete from obra_usuarios where obra_id = p_id;
+    for u in select * from jsonb_array_elements(p -> 'encargados') loop
+      insert into obra_usuarios (obra_id, usuario_id) values (p_id, (u #>> '{}')::uuid) on conflict do nothing;
+    end loop;
+  end if;
+  perform _auditar(p_id, 'obra', p_id, 'modificacion', to_jsonb(v), p);
+end $$;
+
+create or replace function public.definir_cotizacion_manual(p_obra bigint, p_valor double precision) returns void
+language plpgsql security definer set search_path = public as $$
+declare v_ant double precision;
+begin
+  perform _exigir_obra(p_obra);
+  if p_valor is not null and p_valor <= 0 then perform _error('La cotización manual debe ser un número positivo (ARS por USD)'); end if;
+  select cotizacion_manual into v_ant from obras where id = p_obra;
+  update obras set cotizacion_manual = p_valor where id = p_obra;
+  perform _auditar(p_obra, 'obra', p_obra, 'cotizacion_manual', jsonb_build_object('cotizacion_manual', v_ant), jsonb_build_object('cotizacion_manual', p_valor));
+end $$;
+
+create or replace function public.crear_rubro(p_obra bigint, p_nombre text) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare v_id bigint; v_n text := left(nullif(trim(p_nombre), ''), 80);
+begin
+  perform _exigir_obra(p_obra);
+  if v_n is null then perform _error('Nombre del rubro es obligatorio'); end if;
+  v_id := _crear_rubro(p_obra, v_n);
+  perform _auditar(p_obra, 'rubro', v_id, 'alta', null, jsonb_build_object('nombre', v_n));
+  return v_id;
+end $$;
+
+create or replace function public.actualizar_rubro(p_id bigint, p jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+declare v rubros;
+begin
+  perform _exigir_admin();
+  select * into v from rubros where id = p_id;
+  if not found then perform _error('Rubro inexistente'); end if;
+  update rubros set
+    nombre = case when p ? 'nombre' then _texto(p, 'nombre', 'Nombre', 80) else nombre end,
+    activo = case when p ? 'activo' then (p ->> 'activo')::boolean else activo end,
+    orden = case when p ? 'orden' then (p ->> 'orden')::int else orden end
+  where id = p_id;
+  perform _auditar(v.obra_id, 'rubro', p_id, 'modificacion', to_jsonb(v), p);
+end $$;
+
+-- p_pesos: [{rubro_id, peso|null}]. La suma no puede superar 100. Devuelve cuánto falta asignar.
+create or replace function public.definir_pesos(p_obra bigint, p_pesos jsonb) returns double precision
+language plpgsql security definer set search_path = public as $$
+declare x jsonb; v_suma double precision; v_peso double precision; v_antes jsonb;
+begin
+  perform _exigir_admin(); perform _exigir_obra(p_obra);
+  select jsonb_agg(jsonb_build_object('id', id, 'peso', peso)) into v_antes from rubros where obra_id = p_obra;
+  for x in select * from jsonb_array_elements(p_pesos) loop
+    if not exists (select 1 from rubros where id = (x ->> 'rubro_id')::bigint and obra_id = p_obra and activo) then
+      perform _error('Rubro no pertenece a la obra');
+    end if;
+    v_peso := nullif(x ->> 'peso', '')::double precision;
+    if v_peso is not null and (v_peso < 0 or v_peso > 100) then perform _error('Cada peso debe estar entre 0 y 100'); end if;
+    update rubros set peso = v_peso where id = (x ->> 'rubro_id')::bigint;
+  end loop;
+  select coalesce(sum(peso), 0) into v_suma from rubros where obra_id = p_obra and activo;
+  if v_suma > 100.0001 then perform _error(format('Los pesos suman %s %%: no pueden superar 100 %%', round(v_suma::numeric, 2))); end if;
+  perform _auditar(p_obra, 'obra', p_obra, 'pesos', v_antes, p_pesos);
+  return round((100 - v_suma)::numeric, 2)::double precision;
+end $$;
+
+create or replace function public.crear_tipo(p_nombre text) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare v_id bigint; v_n text := left(nullif(trim(p_nombre), ''), 60);
+begin
+  perform _exigir_activo();
+  if v_n is null then perform _error('Nombre del tipo de gasto es obligatorio'); end if;
+  select id into v_id from tipos_gasto where lower(nombre) = lower(v_n);
+  if found then return v_id; end if;
+  insert into tipos_gasto (nombre) values (v_n) returning id into v_id;
+  perform _auditar(null, 'tipo_gasto', v_id, 'alta', null, jsonb_build_object('nombre', v_n));
+  return v_id;
+end $$;
+
+create or replace function public._proveedor(p_val text) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare v_id bigint; v_n text := left(nullif(trim(p_val), ''), 120);
+begin
+  if v_n is null then return null; end if;
+  select id into v_id from proveedores where lower(nombre) = lower(v_n);
+  if found then return v_id; end if;
+  insert into proveedores (nombre) values (v_n) returning id into v_id;
+  return v_id;
+end $$;
+
+create or replace function public._rubro_de_obra(p_obra bigint, p_rubro bigint) returns void language plpgsql security definer set search_path = public as $$
+begin
+  if p_rubro is null or not exists (select 1 from rubros where id = p_rubro and obra_id = p_obra) then perform _error('El rubro no pertenece a esta obra'); end if;
+end $$;
+
+create or replace function public._adjunto_de_obra(p_obra bigint, p_adj text) returns bigint language plpgsql security definer set search_path = public as $$
+declare v_id bigint;
+begin
+  if p_adj is null or p_adj = '' then return null; end if;
+  select id into v_id from adjuntos where id = p_adj::bigint and obra_id = p_obra;
+  if not found then perform _error('Adjunto inválido'); end if;
+  return v_id;
+end $$;
+
+-- ── Presupuestos versionados ────────────────────────────────────────────────
+create or replace function public.definir_presupuesto(p_rubro bigint, p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r rubros; v_prev presupuestos; v_moneda text; v_importe bigint; v_ref date; v_desde date; v_motivo text; c jsonb; v_id bigint; v_ver int;
+begin
+  perform _exigir_admin();
+  select * into r from rubros where id = p_rubro;
+  if not found then perform _error('Rubro inexistente'); end if;
+  v_moneda := _moneda(p ->> 'moneda');
+  v_importe := _cents(p ->> 'importe', 'Presupuesto', true);
+  v_ref := _fecha(p ->> 'fecha_ref', 'Fecha de referencia');
+  v_desde := coalesce(nullif(p ->> 'vigente_desde', '')::date, (now() at time zone 'America/Argentina/Buenos_Aires')::date);
+  v_motivo := _texto_opt(p, 'motivo', 500);
+  select * into v_prev from presupuestos where rubro_id = p_rubro order by version desc limit 1;
+  if v_prev.id is not null and v_motivo is null then perform _error('Indicá el motivo de la modificación del presupuesto'); end if;
+  if v_prev.id is not null and v_desde < v_prev.vigente_desde then perform _error('La nueva versión no puede regir antes que la anterior'); end if;
+  c := _cot(v_ref);
+  v_ver := coalesce(v_prev.version, 0) + 1;
+  insert into presupuestos (obra_id, rubro_id, version, moneda, importe, fecha_ref, vigente_desde, motivo, cot_valor, cot_fecha, cot_fuente, cot_estado, creado_por)
+  values (r.obra_id, p_rubro, v_ver, v_moneda, v_importe, v_ref, v_desde, v_motivo,
+          (c ->> 'cot_valor')::double precision, (c ->> 'cot_fecha')::date, c ->> 'cot_fuente', c ->> 'cot_estado', auth.uid())
+  returning id into v_id;
+  perform _auditar(r.obra_id, 'presupuesto', v_id, case when v_prev.id is null then 'alta' else 'nueva_version' end, to_jsonb(v_prev), p, v_motivo);
+  return jsonb_build_object('id', v_id, 'version', v_ver, 'cotizacion', c);
+end $$;
+
+-- ── Pagos (función interna compartida) ──────────────────────────────────────
+create or replace function public._insertar_pago(c compromisos, p_fecha date, p_moneda text, p_pagado bigint, p_cancelado bigint,
+  p_tc double precision, p_anticipo boolean, p_nota text, p_adj bigint, p_clave text) returns bigint
+language plpgsql security definer set search_path = public as $$
+declare v_id bigint; k jsonb := _cot(p_fecha);
+begin
+  insert into pagos (obra_id, compromiso_id, fecha, moneda_pago, importe_pagado, importe_cancelado, tc_cancelacion, es_anticipo, nota, adjunto_id,
+    cot_valor, cot_fecha, cot_fuente, cot_estado, clave_idem, creado_por)
+  values (c.obra_id, c.id, p_fecha, p_moneda, p_pagado, p_cancelado, p_tc, p_anticipo, p_nota, p_adj,
+    (k ->> 'cot_valor')::double precision, (k ->> 'cot_fecha')::date, k ->> 'cot_fuente', k ->> 'cot_estado', p_clave, auth.uid())
+  returning id into v_id;
+  perform _auditar(c.obra_id, 'pago', v_id, 'alta', null,
+    jsonb_build_object('compromiso_id', c.id, 'fecha', p_fecha, 'moneda_pago', p_moneda, 'importe_pagado', p_pagado, 'importe_cancelado', p_cancelado, 'tc', p_tc));
+  return v_id;
+end $$;
+
+-- ── Agregar gasto ───────────────────────────────────────────────────────────
+-- contado: compromiso + pago total. a_cuenta / contrato: compromiso con saldo y anticipo opcional.
+create or replace function public.crear_gasto(p_obra bigint, p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_clave text := nullif(p ->> 'clave_idem', ''); v_ex bigint;
+  v_fecha date; v_concepto text; v_rubro bigint; v_tipo bigint; v_moneda text; v_importe bigint; v_cond text;
+  v_venc date; v_adj bigint; v_ant bigint; v_ant_fecha date; c jsonb; v_comp compromisos; v_pago bigint;
+begin
+  perform _exigir_obra(p_obra);
+  if v_clave is not null then
+    select id into v_ex from compromisos where clave_idem = v_clave;
+    if found then return jsonb_build_object('id', v_ex, 'duplicado', true); end if;
+  end if;
+  v_fecha := _fecha(p ->> 'fecha', 'Fecha');
+  v_concepto := _texto(p, 'concepto', 'Concepto', 200);
+  v_rubro := nullif(p ->> 'rubro_id', '')::bigint; perform _rubro_de_obra(p_obra, v_rubro);
+  v_tipo := nullif(p ->> 'tipo_id', '')::bigint;
+  if v_tipo is null or not exists (select 1 from tipos_gasto where id = v_tipo) then perform _error('Tipo de gasto inexistente'); end if;
+  v_moneda := _moneda(p ->> 'moneda');
+  v_importe := _cents(p ->> 'importe', 'Importe');
+  v_cond := p ->> 'condicion';
+  if v_cond is null or v_cond not in ('contado', 'a_cuenta', 'contrato') then perform _error('Condición de pago inválida'); end if;
+  if v_cond <> 'contado' and nullif(p ->> 'vencimiento', '') is not null then v_venc := _fecha(p ->> 'vencimiento', 'Vencimiento'); end if;
+  v_adj := _adjunto_de_obra(p_obra, p ->> 'adjunto_id');
+  if v_cond <> 'contado' and coalesce(nullif(p #>> '{anticipo,importe}', ''), '0') <> '0' then
+    v_ant := _cents(p #>> '{anticipo,importe}', 'Anticipo');
+    v_ant_fecha := case when nullif(p #>> '{anticipo,fecha}', '') is null then v_fecha
+                        else _fecha(p #>> '{anticipo,fecha}', 'Fecha del anticipo') end;
+    if v_ant > v_importe then perform _error('El anticipo no puede superar el importe acordado'); end if;
+    if v_ant_fecha < v_fecha then perform _error('El anticipo no puede ser anterior al compromiso'); end if;
+  end if;
+  c := _cot(v_fecha);
+  insert into compromisos (obra_id, rubro_id, tipo_id, proveedor_id, fecha, concepto, moneda, importe, condicion, vencimiento, adjunto_id,
+    cot_valor, cot_fecha, cot_fuente, cot_estado, clave_idem, creado_por)
+  values (p_obra, v_rubro, v_tipo, _proveedor(coalesce(p ->> 'proveedor', '')), v_fecha, v_concepto, v_moneda, v_importe, v_cond, v_venc, v_adj,
+    (c ->> 'cot_valor')::double precision, (c ->> 'cot_fecha')::date, c ->> 'cot_fuente', c ->> 'cot_estado', v_clave, auth.uid())
+  on conflict (clave_idem) do nothing
+  returning * into v_comp;
+  if v_comp.id is null then   -- doble envío simultáneo: ya existe
+    select id into v_ex from compromisos where clave_idem = v_clave;
+    return jsonb_build_object('id', v_ex, 'duplicado', true);
+  end if;
+  perform _auditar(p_obra, 'compromiso', v_comp.id, 'alta', null,
+    jsonb_build_object('concepto', v_concepto, 'moneda', v_moneda, 'importe', v_importe, 'condicion', v_cond));
+  if v_cond = 'contado' then
+    v_pago := _insertar_pago(v_comp, v_fecha, v_moneda, v_importe, v_importe, null, false, 'Pago al contado', v_adj, null);
+  elsif v_ant is not null then
+    v_pago := _insertar_pago(v_comp, v_ant_fecha, v_moneda, v_ant, v_ant, null, true, 'Anticipo', null, null);
+  end if;
+  return jsonb_build_object('id', v_comp.id, 'pago_id', v_pago, 'cotizacion', c);
+end $$;
+
+create or replace function public._saldo(p_comp bigint) returns bigint language sql stable security definer set search_path = public as $$
+  select c.importe - coalesce((select sum(importe_cancelado) from pagos where compromiso_id = c.id and not anulado), 0)
+  from compromisos c where c.id = p_comp;
+$$;
+
+-- Calcula (sin guardar) el pago. Pago en otra moneda: se necesita el importe que cancela o el TC de cancelación.
+create or replace function public.preparar_pago(p_comp bigint, p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare c compromisos; v_saldo bigint; v_fecha date; v_mon text; v_pag bigint; v_canc bigint; v_tc double precision; v_ars bigint; v_usd bigint;
+begin
+  select * into c from compromisos where id = p_comp;
+  if not found then perform _error('Compromiso inexistente'); end if;
+  perform _exigir_obra(c.obra_id);
+  if c.anulado then perform _error('El compromiso está anulado'); end if;
+  v_saldo := _saldo(p_comp);
+  v_fecha := _fecha(p ->> 'fecha', 'Fecha del pago');
+  if v_fecha < c.fecha then perform _error('El pago no puede ser anterior al compromiso'); end if;
+  v_mon := _moneda(p ->> 'moneda_pago');
+  v_pag := _cents(p ->> 'importe_pagado', 'Importe pagado');
+  if v_mon = c.moneda then
+    v_canc := v_pag;
+  elsif nullif(p ->> 'importe_cancelado', '') is not null then
+    v_canc := _cents(p ->> 'importe_cancelado', 'Importe que cancela');
+    v_ars := case when v_mon = 'ARS' then v_pag else v_canc end;
+    v_usd := case when v_mon = 'USD' then v_pag else v_canc end;
+    v_tc := round((v_ars::numeric / v_usd), 4)::double precision;
+  elsif coalesce(nullif(p ->> 'tc_cancelacion', '')::double precision, 0) > 0 then
+    v_tc := (p ->> 'tc_cancelacion')::double precision;
+    v_canc := case when v_mon = 'ARS' then round(v_pag / v_tc) else round(v_pag * v_tc) end;
+    if v_canc <= 0 then perform _error('El importe que cancela resulta en cero'); end if;
+  else
+    perform _error(format('El pago es en %s y el compromiso en %s: indicá cuánto cancela en %s o el tipo de cambio de cancelación', v_mon, c.moneda, c.moneda));
+  end if;
+  if v_canc > v_saldo then
+    perform _error(format('El pago cancela %s y el saldo es %s. No se permiten pagos superiores al saldo.', _fmt(v_canc, c.moneda), _fmt(v_saldo, c.moneda)));
+  end if;
+  return jsonb_build_object('compromiso_id', c.id, 'moneda_compromiso', c.moneda, 'saldo', v_saldo, 'fecha', v_fecha, 'moneda_pago', v_mon,
+    'importe_pagado', v_pag, 'importe_cancelado', v_canc, 'tc', v_tc, 'saldoResultante', v_saldo - v_canc);
+end $$;
+
+create or replace function public.registrar_pago(p_comp bigint, p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare c compromisos; v_clave text := nullif(p ->> 'clave_idem', ''); v_ex bigint; pr jsonb; v_id bigint;
+begin
+  -- Bloquea el compromiso: dos pagos simultáneos no pueden superar el saldo.
+  select * into c from compromisos where id = p_comp for update;
+  if not found then perform _error('Compromiso inexistente'); end if;
+  perform _exigir_obra(c.obra_id);
+  if v_clave is not null then
+    select id into v_ex from pagos where clave_idem = v_clave;
+    if found then return jsonb_build_object('id', v_ex, 'duplicado', true); end if;
+  end if;
+  pr := preparar_pago(p_comp, p);
+  v_id := _insertar_pago(c, (pr ->> 'fecha')::date, pr ->> 'moneda_pago', (pr ->> 'importe_pagado')::bigint, (pr ->> 'importe_cancelado')::bigint,
+    (pr ->> 'tc')::double precision, coalesce((p ->> 'es_anticipo')::boolean, false), _texto_opt(p, 'nota', 300),
+    _adjunto_de_obra(c.obra_id, p ->> 'adjunto_id'), v_clave);
+  return jsonb_build_object('id', v_id, 'saldoResultante', (pr ->> 'saldoResultante')::bigint);
+end $$;
+
+-- ── Correcciones y anulaciones (conservan quién y cuándo) ───────────────────
+create or replace function public.corregir_compromiso(p_id bigint, p jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+declare c compromisos; n compromisos; v_motivo text; v_canc bigint; v_primer date; k jsonb;
+begin
+  select * into c from compromisos where id = p_id for update;
+  if not found then perform _error('Compromiso inexistente'); end if;
+  perform _exigir_obra(c.obra_id);
+  if c.anulado then perform _error('El compromiso está anulado'); end if;
+  v_motivo := _texto(p, 'motivo', 'Motivo de la corrección', 500);
+  v_canc := c.importe - _saldo(p_id);
+  n := c;
+  if p ? 'fecha' then n.fecha := _fecha(p ->> 'fecha', 'Fecha'); end if;
+  if p ? 'concepto' then n.concepto := _texto(p, 'concepto', 'Concepto', 200); end if;
+  if p ? 'rubro_id' then n.rubro_id := (p ->> 'rubro_id')::bigint; perform _rubro_de_obra(c.obra_id, n.rubro_id); end if;
+  if p ? 'tipo_id' then
+    n.tipo_id := (p ->> 'tipo_id')::bigint;
+    if not exists (select 1 from tipos_gasto where id = n.tipo_id) then perform _error('Tipo inexistente'); end if;
+  end if;
+  if p ? 'vencimiento' then n.vencimiento := case when nullif(p ->> 'vencimiento', '') is null then null else _fecha(p ->> 'vencimiento', 'Vencimiento') end; end if;
+  if p ? 'importe' then
+    n.importe := _cents(p ->> 'importe', 'Importe');
+    if n.importe < v_canc and c.condicion <> 'contado' then perform _error('El importe no puede ser menor a lo ya pagado'); end if;
+  end if;
+  if p ? 'proveedor' then n.proveedor_id := _proveedor(coalesce(p ->> 'proveedor', '')); end if;
+  select min(fecha) into v_primer from pagos where compromiso_id = p_id and not anulado;
+  if c.condicion <> 'contado' and v_primer is not null and n.fecha > v_primer then perform _error('La fecha no puede ser posterior a un pago registrado'); end if;
+  if n.fecha <> c.fecha then
+    k := _cot(n.fecha);
+    n.cot_valor := (k ->> 'cot_valor')::double precision; n.cot_fecha := (k ->> 'cot_fecha')::date; n.cot_fuente := k ->> 'cot_fuente'; n.cot_estado := k ->> 'cot_estado';
+  end if;
+  update compromisos set fecha = n.fecha, concepto = n.concepto, rubro_id = n.rubro_id, tipo_id = n.tipo_id, proveedor_id = n.proveedor_id,
+    vencimiento = n.vencimiento, importe = n.importe, cot_valor = n.cot_valor, cot_fecha = n.cot_fecha, cot_fuente = n.cot_fuente,
+    cot_estado = n.cot_estado, modificado_en = now()
+  where id = p_id;
+  -- Contado: el pago total acompaña al compromiso.
+  if c.condicion = 'contado' and (n.importe <> c.importe or n.fecha <> c.fecha) then
+    update pagos set importe_pagado = n.importe, importe_cancelado = n.importe, fecha = n.fecha, cot_valor = n.cot_valor, cot_fecha = n.cot_fecha,
+      cot_fuente = n.cot_fuente, cot_estado = n.cot_estado, modificado_en = now()
+    where compromiso_id = p_id and not anulado;
+  end if;
+  perform _auditar(c.obra_id, 'compromiso', p_id, 'correccion', to_jsonb(c), to_jsonb(n), v_motivo);
+end $$;
+
+create or replace function public.anular_compromiso(p_id bigint, p_motivo text) returns void
+language plpgsql security definer set search_path = public as $$
+declare c compromisos; v_m text := left(nullif(trim(p_motivo), ''), 500);
+begin
+  select * into c from compromisos where id = p_id for update;
+  if not found then perform _error('Compromiso inexistente'); end if;
+  perform _exigir_obra(c.obra_id);
+  if v_m is null then perform _error('Motivo de la anulación es obligatorio'); end if;
+  update compromisos set anulado = true, anulado_motivo = v_m, modificado_en = now() where id = p_id;
+  update pagos set anulado = true, anulado_motivo = 'Anulación del compromiso: ' || v_m, modificado_en = now() where compromiso_id = p_id and not anulado;
+  perform _auditar(c.obra_id, 'compromiso', p_id, 'anulacion', to_jsonb(c), null, v_m);
+end $$;
+
+create or replace function public.anular_pago(p_id bigint, p_motivo text) returns void
+language plpgsql security definer set search_path = public as $$
+declare pg pagos; v_cond text; v_m text := left(nullif(trim(p_motivo), ''), 500);
+begin
+  select * into pg from pagos where id = p_id;
+  if not found then perform _error('Pago inexistente'); end if;
+  perform _exigir_obra(pg.obra_id);
+  select condicion into v_cond from compromisos where id = pg.compromiso_id;
+  if v_cond = 'contado' then perform _error('Es una compra al contado: corregí o anulá el gasto completo'); end if;
+  if v_m is null then perform _error('Motivo de la anulación es obligatorio'); end if;
+  update pagos set anulado = true, anulado_motivo = v_m, modificado_en = now() where id = p_id;
+  perform _auditar(pg.obra_id, 'pago', p_id, 'anulacion', to_jsonb(pg), null, v_m);
+end $$;
+
+-- ── Avance físico ───────────────────────────────────────────────────────────
+create or replace function public.cargar_avance(p_rubro bigint, p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r rubros; v_clave text := nullif(p ->> 'clave_idem', ''); v_ex bigint; v_fecha date; v_pct double precision; v_ult avances; v_mot text; v_id bigint;
+begin
+  select * into r from rubros where id = p_rubro;
+  if not found then perform _error('Rubro inexistente'); end if;
+  perform _exigir_obra(r.obra_id);
+  if v_clave is not null then
+    select id into v_ex from avances where clave_idem = v_clave;
+    if found then return jsonb_build_object('id', v_ex, 'duplicado', true); end if;
+  end if;
+  v_fecha := _fecha(p ->> 'fecha', 'Fecha');
+  begin v_pct := (p ->> 'porcentaje')::double precision; exception when others then v_pct := null; end;
+  if v_pct is null or v_pct < 0 or v_pct > 100 then perform _error('El avance debe ser un porcentaje entre 0 y 100'); end if;
+  select * into v_ult from avances where rubro_id = p_rubro and not anulado order by fecha desc, id desc limit 1;
+  v_mot := _texto_opt(p, 'motivo_baja', 500);
+  if v_ult.id is not null and v_pct < v_ult.porcentaje and v_mot is null then
+    perform _error(format('El último avance cargado es %s %%. Para corregirlo a la baja indicá el motivo.', replace(v_ult.porcentaje::text, '.', ',')));
+  end if;
+  insert into avances (obra_id, rubro_id, fecha, porcentaje, comentario, motivo_baja, adjunto_id, clave_idem, creado_por)
+  values (r.obra_id, p_rubro, v_fecha, v_pct, _texto_opt(p, 'comentario', 1000), v_mot, _adjunto_de_obra(r.obra_id, p ->> 'adjunto_id'), v_clave, auth.uid())
+  on conflict (clave_idem) do nothing
+  returning id into v_id;
+  if v_id is null then
+    select id into v_ex from avances where clave_idem = v_clave;
+    return jsonb_build_object('id', v_ex, 'duplicado', true);
+  end if;
+  perform _auditar(r.obra_id, 'avance', v_id, 'alta', case when v_ult.id is null then null else jsonb_build_object('porcentaje', v_ult.porcentaje) end,
+    jsonb_build_object('porcentaje', v_pct, 'fecha', v_fecha), v_mot);
+  return jsonb_build_object('id', v_id);
+end $$;
+
+create or replace function public.anular_avance(p_id bigint, p_motivo text) returns void
+language plpgsql security definer set search_path = public as $$
+declare a avances; v_m text := left(nullif(trim(p_motivo), ''), 500);
+begin
+  select * into a from avances where id = p_id;
+  if not found then perform _error('Avance inexistente'); end if;
+  perform _exigir_obra(a.obra_id);
+  if v_m is null then perform _error('Motivo es obligatorio'); end if;
+  update avances set anulado = true, anulado_motivo = v_m where id = p_id;
+  perform _auditar(a.obra_id, 'avance', p_id, 'anulacion', to_jsonb(a), null, v_m);
+end $$;
+
+-- ── Copia de seguridad (administrador) ──────────────────────────────────────
+create or replace function public.exportar_respaldo() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare t text; v jsonb; res jsonb := jsonb_build_object('generado', now(), 'version', 1);
+begin
+  perform _exigir_admin();
+  foreach t in array array['perfiles','obras','obra_usuarios','rubros_catalogo','rubros','tipos_gasto','proveedores','cotizaciones',
+    'adjuntos','presupuestos','compromisos','pagos','avances','auditoria'] loop
+    execute format('select coalesce(jsonb_agg(to_jsonb(x)), ''[]''::jsonb) from public.%I x', t) into v;
+    res := res || jsonb_build_object(t, v);
+  end loop;
+  perform _auditar(null, 'sistema', 0, 'descarga_respaldo');
+  return res;
+end $$;
+
+-- Nombres de los usuarios habilitados (sin emails), para mostrar quién cargó cada movimiento.
+create or replace function public.directorio() returns table (id uuid, nombre text)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.nombre from perfiles p where public.es_usuario_activo() and p.rol in ('admin', 'encargado');
+$$;
+
+-- Mantener activo el proyecto (llamado por una tarea programada de GitHub). No expone datos.
+create or replace function public.ping() returns boolean language sql stable as $$ select true $$;

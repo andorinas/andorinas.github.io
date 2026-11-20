@@ -173,6 +173,32 @@ export function generarPdf(inf, opciones = {}) {
       inf.tipos.forEach((t, i) => tfila([t.nombre, fmt(t.comprometido.valor) + mt(t.comprometido), fmt(t.pagado.valor) + mt(t.pagado), fmt(t.pendiente.valor) + mt(t.pendiente)], { bg: i % 2 ? C.fondo : null }));
     }
 
+    // ── Gremios: partes de avance y reclamos (si se pasaron) ─────────────
+    const g = opciones.gremios;
+    if (g && (g.partes.length || g.reclamos.length)) {
+      y += 12;
+      if (y + 120 > doc.page.height - 50) { doc.addPage(); y = 40; }
+      const cuenta = (arr, k, v) => arr.filter((x) => x[k] === v).length;
+      doc.fillColor(C.ink).font('Helvetica-Bold').fontSize(11).text('Gremios: partes de avance y reclamos', L, y);
+      y = doc.y + 4;
+      doc.font('Helvetica').fontSize(9).fillColor(C.ink)
+        .text(`Partes de avance: ${cuenta(g.partes, 'estado', 'pendiente')} pendiente(s) de aprobación · ${cuenta(g.partes, 'estado', 'aprobado')} aprobado(s) · ${cuenta(g.partes, 'estado', 'rechazado')} rechazado(s)`, L, y, { width: AW });
+      y = doc.y + 2;
+      const sinResolver = g.reclamos.filter((r) => r.estado !== 'resuelto');
+      doc.text(`Reclamos: ${cuenta(g.reclamos, 'estado', 'abierto')} abierto(s) · ${cuenta(g.reclamos, 'estado', 'en_curso')} en curso · ${cuenta(g.reclamos, 'estado', 'resuelto')} resuelto(s)`, L, y, { width: AW });
+      y = doc.y + 6;
+      const ESTR = { abierto: 'Abierto', en_curso: 'En curso' };
+      for (const r of sinResolver.slice(0, 10)) {
+        if (y + 14 > doc.page.height - 50) { doc.addPage(); y = 40; }
+        doc.circle(L + 4, y + 5, 2.5).fill(r.estado === 'abierto' ? C.rojo : C.ambar);
+        const quien = r.direccion === 'gremio_a_empresa' ? `de ${r.gremio || 'gremio'} a la empresa` : `de la empresa a ${r.gremio || 'gremio'}`;
+        doc.fillColor(C.ink).font('Helvetica').fontSize(8.5)
+          .text(`${r.titulo} · ${quien}${r.rubro ? ' · ' + r.rubro : ''} · ${ESTR[r.estado]} desde ${dmy(String(r.creado_en))}`, L + 12, y, { width: AW - 12 });
+        y = doc.y + 3;
+      }
+      if (sinResolver.length > 10) { doc.fillColor(C.gris).fontSize(8).text(`y ${sinResolver.length - 10} reclamo(s) más sin resolver (ver Excel).`, L + 12, y); y = doc.y + 3; }
+    }
+
     // Pie en cada página
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {

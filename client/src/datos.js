@@ -132,10 +132,10 @@ export async function generarArchivo(obraId, q, tipo) {
   const nombreBase = `${inf.obra.nombre.replace(/[^\p{L}\p{N}]+/gu, '_')}_corte_${inf.parametros.corte.split('-').reverse().join('-')}_${inf.parametros.moneda}`;
   if (tipo === 'pdf') {
     const { generarPdf } = await import('../../shared/exports/pdf.js');
-    return new File([await generarPdf(inf, { logo: await logoPdf() })], `${nombreBase}.pdf`, { type: 'application/pdf' });
+    return new File([await generarPdf(inf, { logo: await logoPdf(), gremios: await gremiosInforme(obraId, inf.parametros.corte) })], `${nombreBase}.pdf`, { type: 'application/pdf' });
   }
   const { generarExcel } = await import('../../shared/exports/excel.js');
-  return new File([await generarExcel(inf)], `${nombreBase}.xlsx`, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  return new File([await generarExcel(inf, await gremiosInforme(obraId, inf.parametros.corte))], `${nombreBase}.xlsx`, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 let _logoPdf = null;
 /** Logo real (versión blanca) como data URL para el encabezado del PDF. */
@@ -414,4 +414,29 @@ export async function pendientesObra(obraId) {
     supabase.from('reclamos').select('id', { count: 'exact', head: true }).eq('obra_id', obraId).neq('estado', 'resuelto'),
   ]);
   return { partes: p.count || 0, reclamos: r.count || 0 };
+}
+
+/** Partes, reclamos y fotos para los informes (sin URLs firmadas), filtrados a la fecha de corte. */
+async function gremiosInforme(obraId, corte) {
+  try {
+    const { filtrarGremios } = await import('../../shared/exports/excel.js');
+    const [partesRaw, reclamos, fotosRaw, mensajes, rubros, dir] = await Promise.all([
+      todo(() => tabla('partes_avance').select('*').eq('obra_id', obraId).order('fecha').order('id')),
+      listarReclamos(obraId),
+      todo(() => tabla('fotos').select('*').eq('obra_id', obraId).order('fecha').order('id')),
+      todo(() => tabla('reclamo_mensajes').select('id, reclamo_id')),
+      todo(() => tabla('rubros').select('id, nombre').eq('obra_id', obraId)),
+      directorio(),
+    ]);
+    const nr = Object.fromEntries(rubros.map((r) => [r.id, r.nombre]));
+    const adj = fotosRaw.length ? await todo(() => tabla('adjuntos').select('id, nombre').in('id', [...new Set(fotosRaw.map((f) => f.adjunto_id))])) : [];
+    const nombreAdj = Object.fromEntries(adj.map((a) => [a.id, a.nombre]));
+    const partes = partesRaw.map((p) => ({ ...p, rubro: nr[p.rubro_id], usuario: dir[p.creado_por] || '', revisor: dir[p.revisado_por] || '',
+      cantFotos: fotosRaw.filter((f) => f.parte_id === p.id).length }));
+    const rec = reclamos.map((r) => ({ ...r, cantMensajes: mensajes.filter((m) => m.reclamo_id === r.id).length,
+      cantFotos: fotosRaw.filter((f) => f.reclamo_id === r.id).length })).sort((a, b) => a.creado_en.localeCompare(b.creado_en));
+    const fotos = fotosRaw.map((f) => ({ ...f, rubro: nr[f.rubro_id] || null, usuario: dir[f.creado_por] || '', nombreArchivo: nombreAdj[f.adjunto_id] || '',
+      origen: f.parte_id ? 'Parte de avance' : f.reclamo_id ? 'Reclamo' : 'Galería' }));
+    return filtrarGremios({ partes, reclamos: rec, fotos }, corte);
+  } catch { return null; } // el informe financiero sale igual aunque falle esta parte
 }

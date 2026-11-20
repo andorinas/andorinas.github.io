@@ -21,7 +21,11 @@ function encabezado(ws, cols) {
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cols.length } };
 }
 
-export async function generarExcel(inf) {
+/**
+ * @param inf resultado de calcularObra()
+ * @param gremios opcional { partes, reclamos, fotos } ya filtrados a la fecha de corte (ver filtrarGremios)
+ */
+export async function generarExcel(inf, gremios = null) {
   const p = inf.parametros;
   const M = p.moneda;
   const wb = new ExcelJS.Workbook();
@@ -166,5 +170,55 @@ export async function generarExcel(inf) {
   const ag = wa.addRow({ rubro: 'Avance general', pct: inf.avance.valor, com: inf.avance.estado === 'ok' ? 'Ponderado por peso de rubro' :'Pendiente de ponderación' });
   ag.font = { bold: true };
 
+  if (gremios) hojasGremios(wb, gremios);
   return new Uint8Array(await wb.xlsx.writeBuffer());
+}
+
+const ESTADO_PARTE_X = { pendiente: 'Pendiente de aprobación', aprobado: 'Aprobado', rechazado: 'Rechazado' };
+const ESTADO_RECLAMO_X = { abierto: 'Abierto', en_curso: 'En curso', resuelto: 'Resuelto' };
+const DIRECCION_X = { gremio_a_empresa: 'Del gremio a la empresa', empresa_a_gremio: 'De la empresa al gremio' };
+const fechaHora = (ts) => (ts ? new Date(new Date(ts).getTime() - 3 * 3600e3) : null); // hora Argentina
+
+/** Partes de avance, reclamos y fotos de la obra (gremios). */
+function hojasGremios(wb, { partes = [], reclamos = [], fotos = [] }) {
+  const wp = wb.addWorksheet('Partes de avance');
+  encabezado(wp, [
+    { h: 'Fecha', k: 'fecha', f: FECHA, w: 12 }, { h: 'Rubro', k: 'rubro', w: 20 }, { h: 'Avance informado %', k: 'pct', f: '0.00', w: 12 },
+    { h: 'Estado', k: 'estado', w: 22 }, { h: 'Gremio', k: 'gremio', w: 22 }, { h: 'Comentario', k: 'com', w: 40 },
+    { h: 'Revisado por', k: 'rev', w: 20 }, { h: 'Revisado el', k: 'reven', f: 'dd/mm/yyyy hh:mm', w: 16 }, { h: 'Motivo / nota', k: 'mot', w: 34 },
+    { h: 'Fotos', k: 'fotos', w: 8 },
+  ]);
+  for (const p of partes) {
+    wp.addRow({ fecha: toDate(p.fecha), rubro: p.rubro, pct: p.porcentaje, estado: ESTADO_PARTE_X[p.estado], gremio: p.usuario || '',
+      com: p.comentario || '', rev: p.revisor || '', reven: fechaHora(p.revisado_en), mot: p.motivo_revision || '', fotos: p.fotos?.length ?? p.cantFotos ?? 0 });
+  }
+  const wr = wb.addWorksheet('Reclamos');
+  encabezado(wr, [
+    { h: 'Creado', k: 'creado', f: 'dd/mm/yyyy hh:mm', w: 16 }, { h: 'Asunto', k: 'titulo', w: 32 }, { h: 'Sentido', k: 'dir', w: 18 },
+    { h: 'Gremio', k: 'gremio', w: 22 }, { h: 'Rubro', k: 'rubro', w: 18 }, { h: 'Estado', k: 'estado', w: 12 },
+    { h: 'Última actualización', k: 'act', f: 'dd/mm/yyyy hh:mm', w: 16 }, { h: 'Respuestas', k: 'msjs', w: 10 }, { h: 'Fotos', k: 'fotos', w: 8 },
+    { h: 'Detalle', k: 'desc', w: 50 },
+  ]);
+  for (const r of reclamos) {
+    wr.addRow({ creado: fechaHora(r.creado_en), titulo: r.titulo, dir: DIRECCION_X[r.direccion], gremio: r.gremio || '', rubro: r.rubro || 'General',
+      estado: ESTADO_RECLAMO_X[r.estado], act: fechaHora(r.actualizado_en), msjs: r.cantMensajes ?? 0, fotos: r.cantFotos ?? 0, desc: r.descripcion || '' });
+  }
+  const wf = wb.addWorksheet('Fotos');
+  encabezado(wf, [
+    { h: 'Fecha', k: 'fecha', f: FECHA, w: 12 }, { h: 'Rubro', k: 'rubro', w: 20 }, { h: 'Origen', k: 'origen', w: 16 },
+    { h: 'Descripción', k: 'desc', w: 40 }, { h: 'Cargó', k: 'usuario', w: 22 }, { h: 'Archivo', k: 'archivo', w: 30 },
+  ]);
+  for (const ft of fotos) {
+    wf.addRow({ fecha: toDate(ft.fecha), rubro: ft.rubro || 'General', origen: ft.origen, desc: ft.descripcion || '', usuario: ft.usuario || '', archivo: ft.nombreArchivo || '' });
+  }
+}
+
+/** Deja sólo lo existente a la fecha de corte (mismo criterio que el resto del informe). */
+export function filtrarGremios({ partes = [], reclamos = [], fotos = [] }, corte) {
+  const hasta = (ts) => String(ts).slice(0, 10) <= corte;
+  return {
+    partes: partes.filter((p) => p.fecha <= corte),
+    reclamos: reclamos.filter((r) => hasta(new Date(new Date(r.creado_en).getTime() - 3 * 3600e3).toISOString())),
+    fotos: fotos.filter((f) => f.fecha <= corte),
+  };
 }

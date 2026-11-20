@@ -86,6 +86,28 @@ test('fotos: la empresa arma la galería; el gremio sólo ve sus fotos y las de 
   await assert.rejects(() => elec.rpc('agregar_fotos', { p_obra: O.obraId, p: { fotos: [] } }), /acceso/);
 });
 
+test('el Excel incluye partes, reclamos y fotos; el PDF resume reclamos sin resolver (a la fecha de corte)', async () => {
+  const { admin } = ctx;
+  const { generarExcel, filtrarGremios } = await import('../shared/exports/excel.js');
+  const { generarPdf } = await import('../shared/exports/pdf.js');
+  const ExcelJS = (await import('exceljs')).default;
+  const partes = await admin.query('select * from partes_avance where obra_id = $1 order by id', [O.obraId]);
+  const reclamos = await admin.query('select * from reclamos where obra_id = $1 order by id', [O.obraId]);
+  const fotos = (await admin.query('select * from fotos where obra_id = $1 order by id', [O.obraId]))
+    .map((x) => ({ ...x, origen: x.parte_id ? 'Parte de avance' : x.reclamo_id ? 'Reclamo' : 'Galería' }));
+  const g = filtrarGremios({ partes: partes.map((p) => ({ ...p, rubro: 'Electricidad' })), reclamos, fotos }, '2026-12-31');
+  const inf = await ver(admin, O.obraId);
+  const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await generarExcel(inf, g));
+  assert.equal(wb.getWorksheet('Partes de avance').actualRowCount, 1 + partes.length);
+  assert.equal(wb.getWorksheet('Reclamos').actualRowCount, 1 + reclamos.length);
+  assert.equal(wb.getWorksheet('Fotos').actualRowCount, 1 + fotos.length);
+  assert.ok(wb.getWorksheet('Partes de avance').getRow(2).getCell(1).value instanceof Date, 'fechas como celdas de fecha');
+  // A una fecha de corte anterior, los partes posteriores no aparecen
+  assert.equal(filtrarGremios({ partes, reclamos, fotos }, '2026-03-05').partes.length, 1);
+  const pdf = await generarPdf(inf, { gremios: g });
+  assert.equal(new TextDecoder().decode(pdf.subarray(0, 5)), '%PDF-');
+});
+
 test('eliminar la obra borra también partes, reclamos y fotos', async () => {
   const { admin, pg } = ctx;
   const nombre = (await admin.query('select nombre from obras where id = $1', [O.obraId]))[0].nombre;

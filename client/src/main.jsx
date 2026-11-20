@@ -8,7 +8,7 @@ import '@fontsource/montserrat/700.css';
 import '@fontsource/montserrat/800.css';
 import './styles.css';
 import { AuthCtx, ToastCtx, useAuth, useToast } from './ctx.js';
-import { supabase, configurado } from './supabase.js';
+import { supabase, configurado, enlaceEmail } from './supabase.js';
 import { perfilActual, ingresar, nuevaPassword, salir } from './datos.js';
 import { Marca, Sheet, Campo, Aviso, useCargando } from './components/ui.jsx';
 import Login from './pages/Login.jsx';
@@ -122,7 +122,17 @@ function App() {
   };
   useEffect(() => {
     if (!configurado) return;
-    perfilActual().then(setUser).catch(() => setUser(null));
+    (async () => {
+      if (enlaceEmail?.access_token && enlaceEmail.refresh_token) {
+        const { error } = await supabase.auth.setSession({ access_token: enlaceEmail.access_token, refresh_token: enlaceEmail.refresh_token });
+        if (!error && enlaceEmail.type === 'recovery') setRecuperacion(true);
+      }
+      return perfilActual();
+    })().then(setUser).catch(() => setUser(null));
+    if ((enlaceEmail?.error_code || enlaceEmail?.error_description) && !enlaceEmail.avisado) {
+      enlaceEmail.avisado = true;
+      setTimeout(() => toast('El enlace del email venció o ya se usó. Pedí uno nuevo con “Olvidé mi contraseña”.', 'error'), 400);
+    }
     const { data: sub } = supabase.auth.onAuthStateChange((evento) => {
       if (evento === 'PASSWORD_RECOVERY') setRecuperacion(true);
       if (evento === 'SIGNED_OUT') setUser(null);

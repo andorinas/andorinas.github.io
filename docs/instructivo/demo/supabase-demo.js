@@ -22,6 +22,7 @@ grant usage on schema public to anon, authenticated;
 `;
 
 export const configurado = true;
+export const enlaceEmail = null;
 
 const pg = new PGlite({
   parsers: { 20: (v) => Number(v), 1700: (v) => Number(v), 1082: (v) => v, 1184: (v) => new Date(v).toISOString() },

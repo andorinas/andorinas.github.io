@@ -428,3 +428,4 @@ button.kpi { cursor: pointer; } button.kpi:hover { box-shadow: 0 0 0 2px var(--i
 .login-marca { justify-content: center; }
 .login-form .login-marca .marca-logo { margin: 0 auto; }
 @media (max-width: 639px) { .cabecera .marca img + img { display: none; } }
+@media (min-width: 900px) { .login-form .login-marca { display: none; } }

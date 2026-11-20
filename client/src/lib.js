@@ -34,15 +34,7 @@ export function parseImporte(txt) {
   if (!/^\d+(\.\d{0,2})?$/.test(s)) return null;
   return Math.round(Number(s) * 100);
 }
-export function parseDecimal(txt) {
-  if (txt == null || txt === '') return null;
-  let s = String(txt).trim().replace(/\s|ARS|%/gi, '');
-  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ''); // "1.550" = mil quinientos cincuenta
-  if (!/^d+(.d+)?$/.test(s)) return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
-}
+export { parseDecimal } from '../../shared/numeros.js';
 /** "DD/MM/AAAA" -> "AAAA-MM-DD" (o null si no es válida). */
 export function parseDMY(txt) {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(txt).trim());

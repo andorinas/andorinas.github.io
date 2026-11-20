@@ -19,7 +19,7 @@ create table storage.buckets (id text primary key, name text, public boolean, fi
 create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
 alter table storage.objects enable row level security;
 grant usage on schema storage to anon, authenticated;
-grant select, insert on storage.objects to authenticated;
+grant select, insert, delete on storage.objects to authenticated;
 grant usage on schema public to anon, authenticated;
 `;
 

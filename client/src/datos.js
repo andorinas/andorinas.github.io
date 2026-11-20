@@ -289,3 +289,14 @@ export async function api(url, { method = 'GET', body } = {}) {
   }
   throw new ApiError(404, `Operación no disponible: ${method} ${ruta}`);
 }
+
+/** Elimina DEFINITIVAMENTE una obra (sólo administrador) y sus comprobantes del almacenamiento. */
+export async function eliminarObra(obraId, confirmacion) {
+  const r = await rpc('eliminar_obra', { p_obra: Number(obraId), p_confirmacion: confirmacion });
+  const rutas = r.rutas || [];
+  for (let i = 0; i < rutas.length; i += 100) {
+    // Si falla el borrado de algún archivo, los datos igual ya se eliminaron; sólo queda el archivo huérfano.
+    await supabase.storage.from('adjuntos').remove(rutas.slice(i, i + 100)).catch(() => {});
+  }
+  return r;
+}

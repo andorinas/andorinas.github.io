@@ -33,3 +33,8 @@ begin
   returning id into v_id;
   return v_id;
 end $$;
+
+-- Sólo el administrador puede borrar comprobantes (al eliminar una obra completa).
+drop policy if exists controlar_adjuntos_borrar on storage.objects;
+create policy controlar_adjuntos_borrar on storage.objects for delete to authenticated
+  using (bucket_id = 'adjuntos' and public.es_admin());

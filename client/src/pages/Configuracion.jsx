@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { eliminarObra } from '../datos.js';
 import { api, money, dmy, dmyHora, tc, hoyISO, ESTADO_OBRA } from '../lib.js';
 import { useObra, useToast } from '../ctx.js';
 import { Campo, FechaInput, ImporteInput, Segmentado, Aviso, Chip, useCargando } from '../components/ui.jsx';
@@ -157,6 +159,46 @@ export default function Configuracion() {
         <ul className="lista-simple">{tipos.map((t) => <li key={t.id}><span>{t.nombre}</span>{t.sistema ? <span className="chico texto-suave">predefinido</span> : null}</li>)}</ul>
         <div className="fila-inline"><input placeholder="Nuevo tipo" value={nuevoTipo} onChange={(e) => setNuevoTipo(e.target.value)} /><button className="btn btn-sec" onClick={agregarTipo}>Agregar</button></div>
       </section>
+      <ZonaPeligro />
     </div>
+  );
+}
+
+/** Eliminación definitiva de la obra (sólo administrador). Pensada para obras de prueba o cargadas por error. */
+function ZonaPeligro() {
+  const { obra } = useObra();
+  const toast = useToast();
+  const nav = useNavigate();
+  const [abierto, setAbierto] = useState(false);
+  const [txt, setTxt] = useState('');
+  const [error, setError] = useState(null);
+  const [cargando, run] = useCargando();
+  const coincide = txt.trim().toLowerCase() === obra.nombre.trim().toLowerCase();
+  const eliminar = () => run(async () => {
+    try {
+      const r = await eliminarObra(obra.id, txt);
+      toast(`Obra eliminada: ${r.compromisos} gasto(s), ${r.pagos} pago(s), ${r.avances} avance(s) y ${r.adjuntos} comprobante(s)`);
+      nav('/');
+    } catch (e) { setError(e.message); }
+  });
+  return (
+    <section className="panel zona-peligro">
+      <h2>Eliminar obra</h2>
+      <p className="texto-suave chico">Borra <strong>definitivamente</strong> la obra con todos sus rubros, presupuestos, gastos, pagos, avances y comprobantes. No se puede deshacer. Usalo sólo para obras de prueba o cargadas por error; para una obra terminada, cambiá su estado a <em>Finalizada</em>.</p>
+      {!abierto ? (
+        <button className="btn btn-peligro" onClick={() => setAbierto(true)}>Eliminar esta obra…</button>
+      ) : (
+        <div className="form">
+          {error && <Aviso tipo="error">{error}</Aviso>}
+          <Campo label={`Para confirmar, escribí el nombre de la obra: “${obra.nombre}”`}>
+            <input value={txt} onChange={(e) => setTxt(e.target.value)} autoComplete="off" />
+          </Campo>
+          <div className="pie-form">
+            <button className="btn btn-fantasma" onClick={() => { setAbierto(false); setTxt(''); setError(null); }}>Cancelar</button>
+            <button className="btn btn-peligro" disabled={!coincide || cargando} onClick={eliminar}>{cargando ? 'Eliminando…' : 'Eliminar definitivamente'}</button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

@@ -97,3 +97,30 @@ test('corrección y anulación quedan auditadas con usuario y motivo', async () 
   assert.ok(aud.every((a) => a.usuario_id === enc.id));
   assert.equal(aud[2].motivo, 'Cargado dos veces');
 });
+
+test('eliminar obra: sólo el administrador, con el nombre exacto, borra todo y deja constancia', async () => {
+  const { admin, enc, pg } = ctx;
+  const id = await admin.rpc('crear_obra', { p: { nombre: 'Prueba a borrar', fecha_inicio: '2026-03-01', rubros: ['Pintura'] } });
+  const rub = (await admin.query('select id from rubros where obra_id = $1', [id]))[0].id;
+  await admin.rpc('actualizar_usuario', { p_id: enc.id, p: { obras: [A.obraId, id] } });
+  const g = await enc.rpc('crear_gasto', { p_obra: id, p: { fecha: '2026-03-02', concepto: 'x', rubro_id: rub, tipo_id: A.t.Materiales, moneda: 'ARS', importe: 100, condicion: 'contrato', anticipo: { importe: 50 } } });
+  await enc.rpc('cargar_avance', { p_rubro: rub, p: { fecha: '2026-03-02', porcentaje: 10 } });
+  await enc.query("insert into storage.objects (bucket_id, name) values ('adjuntos', $1)", [`obra-${id}/f.pdf`]);
+  await enc.rpc('registrar_adjunto', { p_obra: id, p_ruta: `obra-${id}/f.pdf`, p_nombre: 'f.pdf', p_mime: 'application/pdf', p_tamano: 1 });
+  await assert.rejects(() => enc.rpc('eliminar_obra', { p_obra: id, p_confirmacion: 'Prueba a borrar' }), /administrador/);
+  await assert.rejects(() => admin.rpc('eliminar_obra', { p_obra: id, p_confirmacion: 'otra cosa' }), /nombre de la obra/);
+  const antesA = (await admin.query('select count(*)::int n from compromisos where obra_id = $1', [A.obraId]))[0].n;
+  const r = await admin.rpc('eliminar_obra', { p_obra: id, p_confirmacion: '  prueba A BORRAR ' });
+  assert.deepEqual({ c: r.compromisos, p: r.pagos, a: r.avances, adj: r.adjuntos, rutas: r.rutas }, { c: 1, p: 1, a: 1, adj: 1, rutas: [`obra-${id}/f.pdf`] });
+  for (const t of ['obras', 'rubros', 'compromisos', 'pagos', 'avances', 'adjuntos', 'presupuestos', 'obra_usuarios']) {
+    const col = t === 'obras' ? 'id' : 'obra_id';
+    assert.equal((await pg.query(`select count(*)::int n from ${t} where ${col} = $1`, [id])).rows[0].n, 0, t);
+  }
+  assert.equal((await admin.query('select count(*)::int n from compromisos where obra_id = $1', [A.obraId]))[0].n, antesA, 'otras obras intactas');
+  const [aud] = await admin.query("select accion from auditoria where entidad = 'obra' and entidad_id = $1 and obra_id is null", [id]);
+  assert.equal(aud.accion, 'eliminacion');
+  // Sólo el admin puede borrar archivos del almacenamiento
+  await enc.query("insert into storage.objects (bucket_id, name) values ('adjuntos', $1)", [`obra-${A.obraId}/g.pdf`]);
+  assert.equal((await enc.query("delete from storage.objects where name = $1 returning name", [`obra-${A.obraId}/g.pdf`])).length, 0);
+  assert.equal((await admin.query("delete from storage.objects where name = $1 returning name", [`obra-${A.obraId}/g.pdf`])).length, 1);
+});

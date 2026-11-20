@@ -14,7 +14,7 @@ grant execute on function
   public.registrar_pago(bigint, jsonb), public.corregir_compromiso(bigint, jsonb), public.anular_compromiso(bigint, text),
   public.anular_pago(bigint, text), public.cargar_avance(bigint, jsonb), public.anular_avance(bigint, text),
   public.registrar_adjunto(bigint, text, text, text, bigint), public.exportar_respaldo(), public._obra_de_ruta(text),
-  public.directorio()
+  public.directorio(), public.eliminar_obra(bigint, text)
 to authenticated;
 
 -- Las políticas de Storage evalúan estas funciones con el rol del usuario.

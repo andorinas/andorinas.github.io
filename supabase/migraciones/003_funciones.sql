@@ -692,3 +692,37 @@ $$;
 
 -- Mantener activo el proyecto (llamado por una tarea programada de GitHub). No expone datos.
 create or replace function public.ping() returns boolean language sql stable as $$ select true $$;
+
+-- Eliminación DEFINITIVA de una obra y todos sus datos (sólo administrador; para obras de prueba o cargadas por error).
+-- Exige escribir el nombre exacto. Devuelve las rutas de comprobantes para borrarlos del almacenamiento.
+-- Queda un registro en auditoría (visible sólo para administradores) con el resumen de lo eliminado.
+create or replace function public.eliminar_obra(p_obra bigint, p_confirmacion text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare o obras; v_rutas jsonb; v_resumen jsonb;
+begin
+  perform _exigir_admin();
+  select * into o from obras where id = p_obra for update;
+  if not found then perform _error('Obra inexistente'); end if;
+  if lower(trim(coalesce(p_confirmacion, ''))) <> lower(trim(o.nombre)) then
+    perform _error('Para eliminar, escribí exactamente el nombre de la obra');
+  end if;
+  select coalesce(jsonb_agg(ruta), '[]'::jsonb) into v_rutas from adjuntos where obra_id = p_obra;
+  v_resumen := jsonb_build_object(
+    'rubros', (select count(*) from rubros where obra_id = p_obra),
+    'presupuestos', (select count(*) from presupuestos where obra_id = p_obra),
+    'compromisos', (select count(*) from compromisos where obra_id = p_obra),
+    'pagos', (select count(*) from pagos where obra_id = p_obra),
+    'avances', (select count(*) from avances where obra_id = p_obra),
+    'adjuntos', jsonb_array_length(v_rutas));
+  delete from pagos where obra_id = p_obra;
+  delete from compromisos where obra_id = p_obra;
+  delete from avances where obra_id = p_obra;
+  delete from presupuestos where obra_id = p_obra;
+  delete from adjuntos where obra_id = p_obra;
+  delete from rubros where obra_id = p_obra;
+  delete from obra_usuarios where obra_id = p_obra;
+  delete from auditoria where obra_id = p_obra;
+  delete from obras where id = p_obra;
+  perform _auditar(null, 'obra', p_obra, 'eliminacion', to_jsonb(o) || jsonb_build_object('eliminado', v_resumen), null, 'Obra eliminada por el administrador');
+  return v_resumen || jsonb_build_object('rutas', v_rutas);
+end $$;

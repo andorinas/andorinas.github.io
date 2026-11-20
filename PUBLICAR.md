@@ -1,5 +1,7 @@
 # Publicar ControlAr (GitHub Pages + Supabase, gratis y sin tarjeta)
 
+> **Instalación actual:** la app está en **https://andorinas.github.io**, publicada desde el repositorio `andorinas/andorinas.github.io` (organización de GitHub **andorinas**). Esta guía queda como referencia para una instalación nueva.
+
 Tiempo estimado: 20 minutos. Conviene crear las cuentas con un email de **Andorinas**, así la empresa queda como dueña de la app y de sus datos.
 
 ## 1. Supabase (datos y usuarios)
@@ -15,7 +17,7 @@ Tiempo estimado: 20 minutos. Conviene crear las cuentas con un email de **Andori
    * Al **final** del texto, reemplazá `TU-EMAIL@EJEMPLO.COM` por el email de quien va a administrar la app.
    * Tocá **Run**. Debe decir *Success*.
 4. **Authentication → URL Configuration** (completalo después del paso 2.4, cuando tengas la dirección de GitHub Pages):
-   * **Site URL**: `https://USUARIO.github.io/controlar/`
+   * **Site URL**: `https://ORGANIZACION.github.io/`
    * **Redirect URLs** → *Add URL*: la misma dirección.
 5. **Project Settings → API** (o *API Keys*): anotá
    * **Project URL** (`https://xxxx.supabase.co`)
@@ -24,13 +26,13 @@ Tiempo estimado: 20 minutos. Conviene crear las cuentas con un email de **Andori
 ## 2. GitHub (la app)
 
 1. Entrá a **github.com** → creá la cuenta. El nombre de usuario forma parte de la dirección (`USUARIO.github.io`).
-2. *New repository*: nombre `controlar`, **Public** (GitHub Pages gratis requiere repositorio público; el código no tiene datos ni claves privadas), sin README → *Create repository*.
+2. *New repository*: nombre `ORGANIZACION.github.io` (así la app queda en la raíz de la dirección), **Public** (GitHub Pages gratis requiere repositorio público; el código no tiene datos ni claves privadas), sin README → *Create repository*.
 3. En el repositorio → **Settings → Secrets and variables → Actions → pestaña Variables → New repository variable**:
    * `SUPABASE_URL` = Project URL del paso 1.5
    * `SUPABASE_ANON_KEY` = Publishable key del paso 1.5
 4. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 5. Subir el código (lo hace Claude con tu autorización; Git abre el navegador para que inicies sesión en GitHub).
-6. En la pestaña **Actions** se ejecuta *Publicar en GitHub Pages*: corre las pruebas, compila y publica. Al terminar, la dirección es `https://USUARIO.github.io/controlar/`.
+6. En la pestaña **Actions** se ejecuta *Publicar en GitHub Pages*: corre las pruebas, compila y publica. Al terminar, la dirección es `https://ORGANIZACION.github.io/`.
 
 ## 3. Primer ingreso
 

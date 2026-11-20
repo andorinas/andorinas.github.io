@@ -14,6 +14,8 @@ Control de **presupuestos, gastos, pagos y avance físico** de obras, para usar 
 * **Cotización del dólar**: BNA billete **venta**, cargada a mano por el administrador en *Dólar BNA*. Cada movimiento toma la de su fecha o la última anterior (día sin publicación). Si todavía no hay una cotización cargada para esa fecha o una posterior, queda **“Cotización pendiente”** y se completa sola al cargarla, sin duplicar nada. Corregir una cotización exige motivo y conserva el historial.
 * **Usuarios**: cada persona crea su cuenta desde la app; queda pendiente hasta que el administrador la habilita como encargado (eligiendo sus obras) o administrador. El email configurado en la instalación es el administrador inicial.
 
+**App:** https://andorinas.github.io — repositorio `andorinas/andorinas.github.io` (organización de GitHub **andorinas**).
+
 Guía de publicación paso a paso: **[PUBLICAR.md](PUBLICAR.md)**.
 
 ## Desarrollo

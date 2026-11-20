@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ingresar, registrarse, recuperarPassword } from '../datos.js';
 import { useAuth } from '../ctx.js';
-import { Isologo, Aviso, Segmentado, useCargando } from '../components/ui.jsx';
+import { Marca, Aviso, Segmentado, useCargando } from '../components/ui.jsx';
 
 export default function Login() {
   const { setUser } = useAuth();
@@ -37,11 +37,11 @@ export default function Login() {
   return (
     <main className="login">
       <div className="login-arte" aria-hidden="true">
-        <Isologo size={180} color="#ffffff" />
+        <Marca claro alto={260} />
         <p>Arquitectura e Ingeniería<br />Proyecto y Dirección<br />Cómputo y presupuesto</p>
       </div>
       <form className="login-form" onSubmit={enviar}>
-        <div className="login-marca"><Isologo size={56} /><div><div className="marca-nombre grande">ANDORINAS</div><div className="marca-sub">Ingeniería &amp; Construcción</div></div></div>
+        <div className="login-marca"><Marca alto={120} /></div>
         <h1>ControlAr</h1>
         <p className="texto-suave">Presupuestos, gastos, pagos y avance de obra.</p>
         {modo !== 'recuperar' && <Segmentado value={modo} onChange={(m) => { setModo(m); setError(null); }} nombre="Acceso" opciones={[['ingresar', 'Ingresar'], ['registrarse', 'Crear cuenta']]} />}

@@ -1,28 +1,25 @@
 import { isValidElement, useEffect, useId, useRef, useState } from 'react';
 import { dmy, parseDMY, parseImporte, numero } from '../lib.js';
 
-export const LOGO_EDIFICIOS = 'M8 56 V36 H18 V56 M18 56 V18 H28 V10 H36 V56 M36 56 V28 H46 V36 H52 V56 M4 56 H60 M22 24 V52 M32 16 V52 M41 34 V52';
-export const LOGO_GOLONDRINA = 'M44 9 C47 9 49 10 51 12 L57 6 L54 13 C56 14 58 14 60 13 C57 16 53 16 50 15 L47 19 L48 14 C46 13 45 11 44 9 Z';
+// Logo real de Andorinas (recortado del archivo original): versiones negra y blanca con fondo transparente.
+const marca = (n) => `${import.meta.env.BASE_URL}marca/${n}.png`;
 
-export function Isologo({ size = 32, color = 'currentColor' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <path d={LOGO_EDIFICIOS} fill="none" stroke={color} strokeWidth="2.6" strokeLinecap="square" />
-      <path d={LOGO_GOLONDRINA} fill={color} />
-    </svg>
-  );
+/** Isologo (edificios + golondrina). claro = versión blanca para fondos oscuros. */
+export function Isologo({ size = 32, claro = false }) {
+  return <img src={marca(claro ? 'isologo-blanco' : 'isologo-negro')} alt="" aria-hidden="true" style={{ height: size, width: 'auto' }} />;
 }
 
-export function Marca({ compacta }) {
-  return (
-    <div className="marca">
-      <Isologo size={compacta ? 30 : 40} />
-      <div>
-        <div className="marca-nombre">ANDORINAS</div>
-        {!compacta && <div className="marca-sub">Ingeniería &amp; Construcción</div>}
-      </div>
-    </div>
-  );
+/** Marca completa. compacta = isologo + "ANDORINAS" en línea (encabezado); si no, el logo apilado original. */
+export function Marca({ compacta, claro = false, alto }) {
+  if (compacta) {
+    return (
+      <span className="marca">
+        <img src={marca(claro ? 'isologo-blanco' : 'isologo-negro')} alt="" aria-hidden="true" style={{ height: alto || 30, width: 'auto' }} />
+        <img src={marca(claro ? 'texto-blanco' : 'texto-negro')} alt="Andorinas Ingeniería & Construcción" style={{ height: (alto || 30) * 0.72, width: 'auto' }} />
+      </span>
+    );
+  }
+  return <img className="marca-logo" src={marca(claro ? 'logo-blanco' : 'logo-negro')} alt="Andorinas Ingeniería & Construcción" style={{ height: alto || 110, width: 'auto' }} />;
 }
 
 /** Modal tipo "hoja": pantalla completa en celular, centrado en tablet/escritorio. */

@@ -420,3 +420,11 @@ button.kpi { cursor: pointer; } button.kpi:hover { box-shadow: 0 0 0 2px var(--i
 .fecha-input.invalida input:first-child { border-color: var(--error); background: var(--error-bg); }
 /* aviso de dólar manual visible aunque los controles estén plegados en el celular */
 @media (max-width: 639px) { .controles-vista:not(.abierto) > .aviso-alerta { display: flex; } }
+
+/* logo real */
+.marca { display: inline-flex; align-items: center; gap: .55rem; }
+.marca img { display: block; }
+.marca-logo { display: block; max-width: 100%; }
+.login-marca { justify-content: center; }
+.login-form .login-marca .marca-logo { margin: 0 auto; }
+@media (max-width: 639px) { .cabecera .marca img + img { display: none; } }

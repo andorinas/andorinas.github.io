@@ -132,11 +132,23 @@ export async function generarArchivo(obraId, q, tipo) {
   const nombreBase = `${inf.obra.nombre.replace(/[^\p{L}\p{N}]+/gu, '_')}_corte_${inf.parametros.corte.split('-').reverse().join('-')}_${inf.parametros.moneda}`;
   if (tipo === 'pdf') {
     const { generarPdf } = await import('../../shared/exports/pdf.js');
-    return new File([await generarPdf(inf)], `${nombreBase}.pdf`, { type: 'application/pdf' });
+    return new File([await generarPdf(inf, { logo: await logoPdf() })], `${nombreBase}.pdf`, { type: 'application/pdf' });
   }
   const { generarExcel } = await import('../../shared/exports/excel.js');
   return new File([await generarExcel(inf)], `${nombreBase}.xlsx`, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
+let _logoPdf = null;
+/** Logo real (versión blanca) como data URL para el encabezado del PDF. */
+async function logoPdf() {
+  if (_logoPdf) return _logoPdf;
+  const leer = async (n) => {
+    const b = await fetch(`${import.meta.env.BASE_URL}marca/${n}.png`).then((r) => { if (!r.ok) throw new Error('logo'); return r.blob(); });
+    return new Promise((ok, mal) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = mal; fr.readAsDataURL(b); });
+  };
+  try { _logoPdf = { isologo: await leer('isologo-blanco'), texto: await leer('texto-blanco') }; } catch { _logoPdf = null; }
+  return _logoPdf;
+}
+
 export function descargar(file) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(file); a.download = file.name;

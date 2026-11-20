@@ -4,16 +4,8 @@ import PDFDocument from 'pdfkit';
 import { money0, money, pct, dmy, CRITERIO, ESTADO_OBRA, tc } from '../formato.js';
 
 const C = { ink: '#141417', navy: '#1F3B5C', gris: '#6B6B73', linea: '#DDDCD8', fondo: '#F4F3F0', rojo: '#B42318', ambar: '#B54708', verde: '#067647' };
-// Isologo Andorinas (trazo de edificios + golondrina), viewBox 64×64.
-export const LOGO_EDIFICIOS = 'M8 56 V36 H18 V56 M18 56 V18 H28 V10 H36 V56 M36 56 V28 H46 V36 H52 V56 M4 56 H60 M22 24 V52 M32 16 V52 M41 34 V52';
-export const LOGO_GOLONDRINA = 'M44 9 C47 9 49 10 51 12 L57 6 L54 13 C56 14 58 14 60 13 C57 16 53 16 50 15 L47 19 L48 14 C46 13 45 11 44 9 Z';
-
-function logo(doc, x, y, s, color) {
-  doc.save().translate(x, y).scale(s / 64);
-  doc.path(LOGO_EDIFICIOS).lineWidth(2.2).strokeColor(color).stroke();
-  doc.path(LOGO_GOLONDRINA).fillColor(color).fill();
-  doc.restore();
-}
+// Logo real de Andorinas: se recibe como imágenes PNG (data URL) en versión blanca para el encabezado oscuro.
+// opciones.logo = { isologo, texto } — si no se pasan, el encabezado muestra sólo el nombre.
 
 /** Une los fragmentos del PDF en un Uint8Array (funciona en Node y en el navegador). */
 function unir(chunks) {
@@ -24,7 +16,7 @@ function unir(chunks) {
   return out;
 }
 
-export function generarPdf(inf) {
+export function generarPdf(inf, opciones = {}) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 36, bufferPages: true, info: { Title: `Informe ${inf.obra.nombre}`, Author: 'Andorinas – ControlAr' } });
     const chunks = [];
@@ -38,9 +30,13 @@ export function generarPdf(inf) {
 
     // ── Encabezado de marca ───────────────────────────────────────────────
     doc.rect(0, 0, W, 64).fill(C.ink);
-    logo(doc, L, 10, 44, '#FFFFFF');
-    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(17).text('ANDORINAS', L + 54, 18, { characterSpacing: 1.5 });
-    doc.font('Helvetica').fontSize(7.5).fillColor('#C9C9CF').text('INGENIERÍA & CONSTRUCCIÓN', L + 55, 38, { characterSpacing: 1 });
+    if (opciones.logo?.isologo && opciones.logo?.texto) {
+      doc.image(opciones.logo.isologo, L, 9, { height: 46 });          // isologo 398×423
+      doc.image(opciones.logo.texto, L + 54, 19, { height: 27 });      // texto 725×140
+    } else {
+      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(17).text('ANDORINAS', L, 18, { characterSpacing: 1.5 });
+      doc.font('Helvetica').fontSize(7.5).fillColor('#C9C9CF').text('INGENIERÍA & CONSTRUCCIÓN', L + 1, 38, { characterSpacing: 1 });
+    }
     doc.font('Helvetica').fontSize(9).fillColor('#FFFFFF').text('Informe ejecutivo de obra', L, 20, { width: AW, align: 'right' });
     doc.fontSize(8).fillColor('#C9C9CF').text(`Generado ${dmy(new Date(Date.now() - 3 * 3600e3).toISOString())}`, L, 34, { width: AW, align: 'right' });
 

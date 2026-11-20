@@ -64,7 +64,7 @@ function Cabecera() {
   const [clave, setClave] = useState(false);
   return (
     <header className="cabecera">
-      <Link to="/" className="cabecera-marca" aria-label="Inicio"><Marca compacta /><span className="cabecera-app">ControlAr</span></Link>
+      <Link to="/" className="cabecera-marca" aria-label="Inicio"><Marca compacta claro alto={30} /><span className="cabecera-app">ControlAr</span></Link>
       <nav className="cabecera-nav">
         <Link to="/cotizaciones" className="link-cab">Dólar BNA</Link>
         {user.rol === 'admin' && <Link to="/usuarios" className="link-cab">Usuarios</Link>}

@@ -3,7 +3,8 @@ import { api, pct, dmy, dmyHora, parseDecimal } from '../lib.js';
 import { useObra, useAuth, useToast } from '../ctx.js';
 import { Aviso, Barra, Chip, useCargando } from '../components/ui.jsx';
 import { useInforme } from '../components/Vista.jsx';
-import { verAdjunto } from '../datos.js';
+import { verAdjunto, listarPartes, revisarParte } from '../datos.js';
+import { TarjetaParte } from '../components/Gremios.jsx';
 
 function EditorPesos({ rubros, onGuardado }) {
   const { obra } = useObra();
@@ -61,6 +62,7 @@ export default function Avance() {
   const av = inf?.avance;
   return (
     <>
+      <PartesGremios />
       <section className="panel avance-general">
         <div>
           <h2>Avance físico general{inf ? ` al ${dmy(inf.parametros.corte)}` : ''}</h2>
@@ -107,5 +109,61 @@ export default function Avance() {
         </ul>
       </section>
     </>
+  );
+}
+
+/** Partes de avance enviados por los gremios: la empresa los aprueba (pasan al avance oficial) o rechaza con motivo. */
+function PartesGremios() {
+  const { obra, version, refrescar, recargarObra } = useObra();
+  const toast = useToast();
+  const [partes, setPartes] = useState([]);
+  const [verTodos, setVerTodos] = useState(false);
+  const [rechazando, setRechazando] = useState(null);
+  const [motivo, setMotivo] = useState('');
+  const [error, setError] = useState(null);
+  const [cargando, run] = useCargando();
+  useEffect(() => { listarPartes(obra.id).then(setPartes).catch((e) => setError(e.message)); }, [obra.id, version]);
+  const pendientes = partes.filter((p) => p.estado === 'pendiente');
+  if (!partes.length) return null;
+  const revisar = (p, aprobar) => run(async () => {
+    try {
+      setError(null);
+      await revisarParte(p.id, aprobar, aprobar ? motivo : motivo);
+      toast(aprobar ? `Parte aprobado: ${p.rubro} ${pct(p.porcentaje)}` : 'Parte rechazado');
+      setRechazando(null); setMotivo(''); recargarObra(); refrescar();
+    } catch (e) { setError(e.message); if (/motivo/.test(e.message)) setRechazando(p.id); }
+  });
+  const lista = verTodos ? partes : pendientes;
+  return (
+    <section className="panel">
+      <div className="fila-entre envolver">
+        <h2>Partes de avance de gremios {pendientes.length > 0 && <Chip tipo="alerta">{pendientes.length} por revisar</Chip>}</h2>
+        <button className="link chico" onClick={() => setVerTodos(!verTodos)}>{verTodos ? 'Ver sólo pendientes' : 'Ver historial'}</button>
+      </div>
+      {error && <Aviso tipo="error">{error}</Aviso>}
+      {!lista.length && <p className="texto-suave">No hay partes pendientes.</p>}
+      <ul className="lista-partes">
+        {lista.map((p) => (
+          <TarjetaParte key={p.id} p={p} acciones={p.estado === 'pendiente' && (
+            rechazando === p.id ? (
+              <div className="form">
+                <label className="campo"><span className="campo-label">Motivo (obligatorio para rechazar o si el avance baja)</span>
+                  <input value={motivo} onChange={(e) => setMotivo(e.target.value)} autoFocus /></label>
+                <div className="pie-form">
+                  <button className="btn btn-fantasma" onClick={() => { setRechazando(null); setMotivo(''); }}>Cancelar</button>
+                  <button className="btn btn-sec" disabled={cargando} onClick={() => revisar(p, true)}>Aprobar con nota</button>
+                  <button className="btn btn-peligro" disabled={cargando || !motivo.trim()} onClick={() => revisar(p, false)}>Rechazar</button>
+                </div>
+              </div>
+            ) : (
+              <div className="acciones-detalle">
+                <button className="btn btn-primario" disabled={cargando} onClick={() => revisar(p, true)}>✓ Aprobar</button>
+                <button className="btn btn-sec" onClick={() => { setRechazando(p.id); setMotivo(''); }}>Rechazar…</button>
+              </div>
+            )
+          )} />
+        ))}
+      </ul>
+    </section>
   );
 }

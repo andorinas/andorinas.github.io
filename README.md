@@ -22,7 +22,7 @@ Requiere Node.js 22 (en esta PC: portable en `%LOCALAPPDATA%\Programs\node`).
 
 ```bash
 npm install
-npm test          # 33 pruebas: aceptación A–G, cotizaciones, seguridad (RLS), revisión independiente e instalación
+npm test          # 39 pruebas: aceptación A–G, cotizaciones, seguridad (RLS), revisión independiente, gremios e instalación
 npm run dev       # app en http://localhost:5173 (necesita .env con los datos de Supabase, ver .env.example)
 npm run build     # compila a client/dist
 npm run sql       # regenera supabase/instalar.sql a partir de las migraciones

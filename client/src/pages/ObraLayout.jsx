@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useParams, Link } from 'react-router-dom';
 import { api, hoyISO, ESTADO_OBRA } from '../lib.js';
+import { pendientesObra } from '../datos.js';
 import { ObraCtx, useAuth, useToast } from '../ctx.js';
 import { Aviso, Chip } from '../components/ui.jsx';
 import GastoForm from '../components/GastoForm.jsx';
@@ -22,6 +23,8 @@ export default function ObraLayout() {
   const [vista, setVistaState] = useState(() => leerVista(obraId));
   const [version, setVersion] = useState(0);
   const [modal, setModal] = useState(null); // {tipo, ...opciones}
+  const [pend, setPend] = useState({ partes: 0, reclamos: 0 });
+  useEffect(() => { pendientesObra(obraId).then(setPend).catch(() => {}); }, [obraId, version]);
 
   const recargarObra = useCallback(() => api(`/api/obras/${obraId}`).then(setObra)
     .catch((e) => setObra((actual) => { if (actual) { toast(e.message, 'error'); return actual; } setError(e); return actual; })), [obraId]);
@@ -68,7 +71,9 @@ export default function ObraLayout() {
         <nav className="pestanas" aria-label="Secciones de la obra">
           <NavLink end to="">Tablero</NavLink>
           <NavLink to="movimientos">Movimientos</NavLink>
-          <NavLink to="avance">Avance</NavLink>
+          <NavLink to="avance">Avance{pend.partes > 0 && <span className="badge">{pend.partes}</span>}</NavLink>
+          <NavLink to="fotos">Fotos</NavLink>
+          <NavLink to="reclamos">Reclamos{pend.reclamos > 0 && <span className="badge">{pend.reclamos}</span>}</NavLink>
           {user.rol === 'admin' && <NavLink to="configuracion">Configuración</NavLink>}
         </nav>
       </div>

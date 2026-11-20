@@ -174,7 +174,7 @@ begin
   select * into v from perfiles where id = p_id;
   if not found then perform _error('Usuario inexistente'); end if;
   if p ? 'rol' then
-    if p ->> 'rol' not in ('pendiente', 'encargado', 'admin') then perform _error('Rol inválido'); end if;
+    if p ->> 'rol' not in ('pendiente', 'encargado', 'admin', 'gremio') then perform _error('Rol inválido'); end if;
     if p_id = auth.uid() and p ->> 'rol' <> 'admin' then perform _error('No podés quitarte el rol de administrador'); end if;
     update perfiles set rol = p ->> 'rol' where id = p_id;
   end if;
@@ -714,6 +714,11 @@ begin
     'pagos', (select count(*) from pagos where obra_id = p_obra),
     'avances', (select count(*) from avances where obra_id = p_obra),
     'adjuntos', jsonb_array_length(v_rutas));
+  -- gremios: fotos, reclamos (con su conversación), partes y asignaciones
+  delete from fotos where obra_id = p_obra;
+  delete from reclamos where obra_id = p_obra;
+  delete from partes_avance where obra_id = p_obra;
+  delete from gremio_rubros where obra_id = p_obra;
   delete from pagos where obra_id = p_obra;
   delete from compromisos where obra_id = p_obra;
   delete from avances where obra_id = p_obra;

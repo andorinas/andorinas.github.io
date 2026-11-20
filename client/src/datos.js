@@ -300,3 +300,118 @@ export async function eliminarObra(obraId, confirmacion) {
   }
   return r;
 }
+
+// ── Gremios: fotos, partes de avance y reclamos ─────────────────────────────
+export const ESTADO_RECLAMO = { abierto: 'Abierto', en_curso: 'En curso', resuelto: 'Resuelto' };
+export const ESTADO_PARTE = { pendiente: 'Pendiente de aprobación', aprobado: 'Aprobado', rechazado: 'Rechazado' };
+
+/** Sube varias fotos (sólo imágenes) y devuelve los ids de adjunto. */
+export async function subirFotos(obraId, archivos) {
+  const ids = [];
+  for (const f of archivos) {
+    if (!/^image\//.test(f.type) && !/\.heic$/i.test(f.name)) throw new ApiError(400, `"${f.name}" no es una foto`);
+    ids.push((await subirAdjunto(obraId, f)).id);
+  }
+  return ids;
+}
+
+/** URLs firmadas (1 h) para mostrar fotos; sólo devuelve las que el usuario puede ver. */
+async function conUrls(fotos) {
+  if (!fotos.length) return fotos;
+  const adj = await todo(() => tabla('adjuntos').select('id, ruta, nombre').in('id', [...new Set(fotos.map((f) => f.adjunto_id))]));
+  const porId = Object.fromEntries(adj.map((a) => [a.id, a]));
+  const rutas = adj.map((a) => a.ruta);
+  const firmadas = rutas.length ? chk(await supabase.storage.from('adjuntos').createSignedUrls(rutas, 3600)) : [];
+  const url = Object.fromEntries(firmadas.filter((x) => x.signedUrl).map((x) => [x.path, x.signedUrl]));
+  return fotos.map((f) => ({ ...f, nombreArchivo: porId[f.adjunto_id]?.nombre, url: url[porId[f.adjunto_id]?.ruta] || null }));
+}
+
+export async function listarFotos(obraId, filtro = {}) {
+  const [fotos, rubros, dir] = await Promise.all([
+    todo(() => {
+      let q = tabla('fotos').select('*').eq('obra_id', obraId);
+      if (filtro.parteId) q = q.eq('parte_id', filtro.parteId);
+      if (filtro.reclamoId) q = q.eq('reclamo_id', filtro.reclamoId);
+      return q.order('fecha', { ascending: false }).order('id', { ascending: false });
+    }),
+    todo(() => tabla('rubros').select('id, nombre').eq('obra_id', obraId)), directorio(),
+  ]);
+  const nr = Object.fromEntries(rubros.map((r) => [r.id, r.nombre]));
+  return conUrls(fotos.map((f) => ({ ...f, rubro: nr[f.rubro_id] || null, usuario: dir[f.creado_por] || '',
+    origen: f.parte_id ? 'Parte de avance' : f.reclamo_id ? 'Reclamo' : 'Galería' })));
+}
+export const agregarFotos = (obraId, p) => rpc('agregar_fotos', { p_obra: Number(obraId), p });
+
+export async function listarPartes(obraId, { estado } = {}) {
+  const [partes, rubros, dir] = await Promise.all([
+    todo(() => { let q = tabla('partes_avance').select('*').eq('obra_id', obraId); if (estado) q = q.eq('estado', estado); return q.order('creado_en', { ascending: false }); }),
+    todo(() => tabla('rubros').select('id, nombre').eq('obra_id', obraId)), directorio(),
+  ]);
+  const nr = Object.fromEntries(rubros.map((r) => [r.id, r.nombre]));
+  const fotos = partes.length ? await listarFotos(obraId) : [];
+  return partes.map((p) => ({ ...p, rubro: nr[p.rubro_id], usuario: dir[p.creado_por] || '', revisor: dir[p.revisado_por] || '',
+    fotos: fotos.filter((f) => f.parte_id === p.id) }));
+}
+export const crearParte = (rubroId, p) => rpc('crear_parte_avance', { p_rubro: Number(rubroId), p });
+export const revisarParte = (id, aprobar, motivo) => rpc('revisar_parte', { p_parte: id, p_aprobar: aprobar, p_motivo: motivo || null });
+
+export async function listarReclamos(obraId) {
+  const [rec, rubros, dir] = await Promise.all([
+    todo(() => tabla('reclamos').select('*').eq('obra_id', obraId).order('actualizado_en', { ascending: false })),
+    todo(() => tabla('rubros').select('id, nombre').eq('obra_id', obraId)), directorio(),
+  ]);
+  const nr = Object.fromEntries(rubros.map((r) => [r.id, r.nombre]));
+  return rec.map((r) => ({ ...r, rubro: nr[r.rubro_id] || null, gremio: dir[r.gremio_id] || '', autor: dir[r.creado_por] || '' }));
+}
+export async function detalleReclamo(obraId, id) {
+  const [[r], mensajes, fotos, dir] = await Promise.all([
+    listarReclamos(obraId).then((l) => l.filter((x) => x.id === id)),
+    todo(() => tabla('reclamo_mensajes').select('*').eq('reclamo_id', id).order('id')),
+    listarFotos(obraId, { reclamoId: id }), directorio(),
+  ]);
+  if (!r) throw new ApiError(404, 'Reclamo inexistente o sin acceso');
+  return { ...r, fotos: fotos.filter((f) => !f.mensaje_id),
+    mensajes: mensajes.map((m) => ({ ...m, usuario: dir[m.creado_por] || '', fotos: fotos.filter((f) => f.mensaje_id === m.id) })) };
+}
+export const crearReclamo = (obraId, p) => rpc('crear_reclamo', { p_obra: Number(obraId), p });
+export const responderReclamo = (id, p) => rpc('responder_reclamo', { p_reclamo: id, p });
+
+/** Gremios asignados a una obra (para que la empresa les dirija un reclamo). */
+export async function gremiosDeObra(obraId) {
+  const [asig, dir] = await Promise.all([todo(() => tabla('gremio_rubros').select('*').eq('obra_id', obraId)), directorio()]);
+  const m = {};
+  for (const a of asig) (m[a.usuario_id] ||= { id: a.usuario_id, nombre: dir[a.usuario_id] || 'Gremio', rubros: [] }).rubros.push(a.rubro_id);
+  return Object.values(m);
+}
+
+/** Vista del gremio: sus obras con sus rubros asignados. */
+export async function misObrasGremio() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const [asig, obras, rubros] = await Promise.all([
+    todo(() => tabla('gremio_rubros').select('*').eq('usuario_id', session.user.id)),
+    todo(() => tabla('obras').select('*').order('nombre')),
+    todo(() => tabla('rubros').select('id, nombre, obra_id, activo')),
+  ]);
+  return obras.map((o) => ({ ...o, rubros: rubros.filter((r) => r.obra_id === o.id && asig.some((a) => a.rubro_id === r.id)) }))
+    .filter((o) => o.rubros.length);
+}
+
+/** Administración: obras con rubros y asignaciones de gremios. */
+export async function asignacionesGremios() {
+  const [obras, rubros, asig] = await Promise.all([
+    todo(() => tabla('obras').select('id, nombre, estado').order('nombre')),
+    todo(() => tabla('rubros').select('id, nombre, obra_id, activo').order('orden')),
+    todo(() => tabla('gremio_rubros').select('*')),
+  ]);
+  return { obras: obras.map((o) => ({ ...o, rubros: rubros.filter((r) => r.obra_id === o.id && r.activo) })), asig };
+}
+export const asignarRubrosGremio = (usuarioId, rubros) => rpc('asignar_rubros_gremio', { p_usuario: usuarioId, p_rubros: rubros });
+
+/** Contadores para las pestañas de la obra. */
+export async function pendientesObra(obraId) {
+  const [p, r] = await Promise.all([
+    supabase.from('partes_avance').select('id', { count: 'exact', head: true }).eq('obra_id', obraId).eq('estado', 'pendiente'),
+    supabase.from('reclamos').select('id', { count: 'exact', head: true }).eq('obra_id', obraId).neq('estado', 'resuelto'),
+  ]);
+  return { partes: p.count || 0, reclamos: r.count || 0 };
+}

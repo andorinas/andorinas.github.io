@@ -432,3 +432,32 @@ button.kpi { cursor: pointer; } button.kpi:hover { box-shadow: 0 0 0 2px var(--i
 
 .zona-peligro { border: 1.5px solid var(--error); }
 .zona-peligro h2 { color: var(--error); }
+
+/* gremios: fotos, partes y reclamos */
+.badge { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 6px; border-radius: 99px; background: var(--error); color: #fff; font-size: .7rem; font-weight: 800; line-height: 18px; text-align: center; }
+.galeria { list-style: none; padding: 0; margin: 8px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+@media (max-width: 639px) { .galeria { grid-template-columns: repeat(2, 1fr); } }
+.galeria-item { display: block; aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; background: #e7e6e1; }
+.galeria-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.galeria-sin { display: grid; place-items: center; height: 100%; font-size: .8rem; color: var(--gris); }
+.galeria-pie { display: flex; flex-direction: column; gap: 2px; font-size: .75rem; margin-top: 4px; }
+.galeria-desc { color: var(--ink-2); }
+.fotos-previas { display: flex; flex-wrap: wrap; gap: 8px; }
+.foto-previa { position: relative; width: 84px; height: 84px; margin: 0; border-radius: 8px; overflow: hidden; }
+.foto-previa img { width: 100%; height: 100%; object-fit: cover; }
+.foto-quitar { position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; cursor: pointer; }
+.foto-agregar { width: 84px; height: 84px; border: 2px dashed var(--linea); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: .7rem; cursor: pointer; text-align: center; gap: 2px; }
+.foto-agregar span:first-child { font-size: 1.4rem; }
+.lista-partes { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.tarjeta-parte { border: 1px solid var(--linea); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.tarjeta-parte p { margin: 0; }
+.reclamo-cab { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.reclamo-desc { white-space: pre-wrap; }
+.conversacion { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 10px; }
+.conversacion li { background: var(--fondo); border-radius: 10px; padding: 10px 12px; }
+.conversacion p { margin: 4px 0 0; white-space: pre-wrap; }
+.filtros-fotos { margin: 8px 0 12px; }
+.barra-acciones-2 { grid-template-columns: repeat(2, 1fr); }
+
+.asignar-rubros { display: grid; gap: 8px; width: 100%; margin-top: 6px; }
+@media (min-width: 900px) { .asignar-rubros { grid-template-columns: repeat(2, 1fr); } }

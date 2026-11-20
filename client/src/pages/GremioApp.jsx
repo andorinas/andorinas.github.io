@@ -14,6 +14,7 @@ function Cabecera() {
       <Link to="/" className="cabecera-marca" aria-label="Inicio"><Marca compacta claro alto={30} /><span className="cabecera-app">Gremios</span></Link>
       <nav className="cabecera-nav">
         <span className="cabecera-user">{user.nombre} · Gremio</span>
+        <a href="ayuda/" target="_blank" rel="noopener" className="link-cab">Ayuda</a>
         <button className="btn btn-fantasma btn-chico" onClick={logout}>Salir</button>
       </nav>
     </header>

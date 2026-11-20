@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ayuda · ControlAr · Andorinas</title>
+<meta name="description" content="Videos e instructivo de uso de ControlAr, la app de control de obras de Andorinas.">
+<link rel="icon" type="image/png" href="../favicon.png?v=2">
+<style>
+  :root { --negro: #151515; --fondo: #f4f3ef; --azul: #1f3557; --gris: #5b5b5b; --borde: #dedbd3; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Montserrat', 'Segoe UI', system-ui, sans-serif; background: var(--fondo); color: var(--negro); line-height: 1.5; }
+  header { background: var(--negro); color: #fff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  header img { height: 34px; display: block; }
+  header a { color: #fff; text-decoration: none; font-weight: 600; font-size: .95rem; white-space: nowrap; }
+  main { max-width: 1040px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 6px; }
+  .intro { color: var(--gris); margin: 0 0 24px; }
+  .grilla { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .tarjeta { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .tarjeta.ancha { grid-column: 1 / -1; }
+  .etiqueta { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--azul); }
+  h2 { font-size: 1.2rem; margin: 0; }
+  p { margin: 0; }
+  video { width: 100%; border-radius: 10px; background: #0f1a2b; aspect-ratio: 16 / 9; }
+  .acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: .95rem; }
+  .btn-negro { background: var(--negro); color: #fff; }
+  .btn-borde { border: 1.5px solid var(--negro); color: var(--negro); }
+  .nota { font-size: .85rem; color: var(--gris); }
+  footer { text-align: center; color: var(--gris); font-size: .85rem; padding: 0 16px 32px; }
+  @media (max-width: 760px) { .grilla { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <img src="../marca/logo-blanco.png" alt="Andorinas · Ingeniería &amp; Construcción">
+  <a href="../">← Volver a ControlAr</a>
+</header>
+<main>
+  <h1>Ayuda de ControlAr</h1>
+  <p class="intro">Videos cortos y el instructivo completo para usar la app. Las pantallas que se ven son de una obra de ejemplo.</p>
+
+  <div class="grilla">
+    <section class="tarjeta">
+      <span class="etiqueta">Administradores y encargados</span>
+      <h2>Guía en video (4 minutos y medio)</h2>
+      <video controls playsinline preload="metadata" src="video-empresa.mp4#t=4"></video>
+      <p>Gastos, pagos, movimientos, avance, partes de gremios, fotos, reclamos, el Tablero, informes y las tareas del administrador.</p>
+      <div class="acciones"><a class="btn btn-borde" href="video-empresa.mp4" download="ControlAr-video-empresa.mp4">⬇ Descargar video</a></div>
+    </section>
+
+    <section class="tarjeta">
+      <span class="etiqueta">Gremios</span>
+      <h2>Guía para gremios (1 minuto y medio)</h2>
+      <video controls playsinline preload="metadata" src="video-gremios.mp4#t=4"></video>
+      <p>Para electricistas, plomeros y demás: crear la cuenta, informar el avance con fotos y hacer reclamos desde el celular.</p>
+      <div class="acciones"><a class="btn btn-borde" href="video-gremios.mp4" download="ControlAr-video-gremios.mp4">⬇ Descargar video</a></div>
+    </section>
+
+    <section class="tarjeta ancha">
+      <span class="etiqueta">Instructivo completo</span>
+      <h2>Instructivo de uso en PDF (47 páginas)</h2>
+      <p>Paso a paso con capturas de cada pantalla, preguntas frecuentes y un resumen de quién puede hacer qué. El índice tiene enlaces a cada página.</p>
+      <div class="acciones">
+        <a class="btn btn-negro" href="ControlAr-Instructivo.pdf" target="_blank" rel="noopener">Abrir el instructivo</a>
+        <a class="btn btn-borde" href="ControlAr-Instructivo.pdf" download>⬇ Descargar PDF</a>
+      </div>
+      <p class="nota">¿Olvidaste tu contraseña? En la pantalla de ingreso tocá “Olvidé mi contraseña”. ¿No ves tus obras? Pedile al administrador que te habilite.</p>
+    </section>
+  </div>
+</main>
+<footer>Andorinas · Ingeniería &amp; Construcción · ControlAr</footer>
+</body>
+</html>

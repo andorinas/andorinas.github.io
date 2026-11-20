@@ -63,6 +63,7 @@ export default function Login() {
         {modo === 'ingresar' && <button type="button" className="link chico" onClick={() => { setModo('recuperar'); setError(null); }}>Olvidé mi contraseña</button>}
         {modo === 'recuperar' && <button type="button" className="link chico" onClick={() => setModo('ingresar')}>Volver a ingresar</button>}
         {modo === 'registrarse' && <p className="texto-suave chico">Después de crear la cuenta, el administrador te habilita y te asigna las obras.</p>}
+        <a href="ayuda/" target="_blank" rel="noopener" className="link chico">¿Cómo se usa? Ver videos e instructivo</a>
       </form>
     </main>
   );

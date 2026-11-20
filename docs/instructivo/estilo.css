@@ -1,0 +1,145 @@
+@font-face { font-family: 'Montserrat'; font-weight: 400; src: url('fuentes/montserrat-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 500; src: url('fuentes/montserrat-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 600; src: url('fuentes/montserrat-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 700; src: url('fuentes/montserrat-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Montserrat'; font-weight: 800; src: url('fuentes/montserrat-latin-800-normal.woff2') format('woff2'); }
+
+:root {
+  --negro: #151515; --gris: #5b5b5b; --gris-claro: #ecebe7; --fondo: #f4f3ef;
+  --azul: #1f3a5f; --azul-claro: #e7eef7; --verde: #1d7a46; --verde-claro: #e6f4ec;
+  --naranja: #b5530f; --naranja-claro: #fdf3e3; --rojo: #b3261e; --rojo-claro: #fdecea;
+}
+
+@page {
+  size: A4;
+  margin: 22mm 17mm 20mm 17mm;
+  @top-left { content: "ANDORINAS  ·  ControlAr — Instructivo de uso"; font: 600 7.5pt 'Montserrat', sans-serif; letter-spacing: .06em; color: #8a8a8a; }
+  @top-right { content: string(capitulo); font: 500 7.5pt 'Montserrat', sans-serif; color: #8a8a8a; }
+  @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 500 7.5pt 'Montserrat', sans-serif; color: #8a8a8a; }
+  @bottom-left { content: "andorinas.github.io"; font: 500 7.5pt 'Montserrat', sans-serif; color: #b0b0b0; }
+}
+@page portada { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-right { content: none; } @bottom-left { content: none; } }
+@page indice { @top-right { content: "Índice"; } }
+
+html { font-family: 'Montserrat', 'Segoe UI', sans-serif; font-size: 9.6pt; line-height: 1.5; color: var(--negro); }
+body { margin: 0; }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* Portada */
+.portada { page: portada; height: 297mm; width: 210mm; position: relative; color: #fff;
+  background: linear-gradient(160deg, #0f1a2b 0%, #1f3557 55%, #3c5a85 100%); padding: 32mm 22mm; break-after: page; }
+.portada-logo { width: 118mm; display: block; margin: 18mm auto 0; }
+.portada-texto { margin-top: 38mm; text-align: center; }
+.portada-app { font-weight: 600; letter-spacing: .32em; text-transform: uppercase; font-size: 11pt; color: #c9d6ea; }
+.portada-titulo { font-size: 34pt; font-weight: 800; margin: 4mm 0 6mm; string-set: none; }
+.portada-sub { font-size: 11pt; color: #dfe7f3; line-height: 1.6; }
+.portada-pie { position: absolute; bottom: 22mm; left: 22mm; right: 22mm; display: flex; justify-content: space-between; font-size: 9.5pt; color: #c9d6ea;
+  border-top: 1px solid rgba(255,255,255,.25); padding-top: 5mm; }
+
+/* Índice */
+.indice { page: indice; break-after: page; }
+.titulo-indice { font-size: 22pt; font-weight: 800; margin: 0 0 1mm; }
+.nota-indice { color: var(--gris); margin: 0 0 6mm; }
+.toc { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc-parte { font-weight: 700; font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: var(--azul); margin-top: 4mm !important; padding-bottom: 1mm; border-bottom: 1.5px solid var(--azul); }
+.toc a { display: flex; color: var(--negro); text-decoration: none; padding: 1.15mm 0; font-weight: 600; }
+.toc-sub a { font-weight: 400; padding-left: 7mm; color: #333; font-size: 9pt; }
+.toc a { border-bottom: 1px dotted #cfcdc6; }
+.toc a::after { content: target-counter(attr(href), page); margin-left: auto; padding-left: 3mm; color: var(--azul); font-weight: 700; }
+
+/* Capítulos */
+.capitulo { break-before: page; }
+h1 { font-size: 20pt; font-weight: 800; margin: 0 0 5mm; line-height: 1.2; display: flex; align-items: center; gap: 4mm; flex-wrap: wrap; }
+h1 .num { display: inline-flex; align-items: center; justify-content: center; width: 12mm; height: 12mm; border-radius: 3mm; background: var(--azul); color: #fff; font-size: 16pt; flex: none; }
+h2 { font-size: 13.5pt; font-weight: 800; margin: 7mm 0 3mm; padding-bottom: 1.5mm; border-bottom: 2px solid var(--gris-claro); break-after: avoid; }
+h3 { font-size: 11pt; font-weight: 700; margin: 5mm 0 2mm; break-after: avoid; color: var(--azul); }
+h4 { font-size: 10pt; font-weight: 700; margin: 3mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.5mm; }
+.intro { font-size: 10.5pt; color: #2b2b2b; }
+.nota { font-size: 8.6pt; color: var(--gris); }
+code { font-size: 8.5pt; background: var(--gris-claro); padding: .2mm 1.2mm; border-radius: 1mm; }
+a { color: var(--azul); }
+.url { font-weight: 700; }
+.rojo { color: var(--rojo); font-weight: 700; }
+.solo-admin { font-size: 7.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: var(--naranja-claro); color: var(--naranja); padding: 1.2mm 2.5mm; border-radius: 10mm; }
+
+/* Pasos numerados */
+ol.pasos { counter-reset: paso; list-style: none; padding: 0; margin: 0 0 3mm; }
+ol.pasos[start="7"] { counter-reset: paso 6; }
+ol.pasos > li { counter-increment: paso; position: relative; padding-left: 9mm; margin-bottom: 2mm; break-inside: avoid; }
+ol.pasos > li::before { content: counter(paso); position: absolute; left: 0; top: -.2mm; width: 6mm; height: 6mm; border-radius: 50%; background: var(--negro); color: #fff;
+  font-weight: 700; font-size: 8pt; display: flex; align-items: center; justify-content: center; }
+ol.pasos ul { margin: 1.5mm 0 0; padding-left: 5mm; }
+ol.pasos ul li { margin-bottom: 1mm; }
+ul.puntos { padding-left: 5mm; margin: 0 0 3mm; }
+ul.puntos li { margin-bottom: 1.5mm; }
+ol.leyenda { counter-reset: ley; list-style: none; padding: 0; margin: 0 0 3mm; columns: 2; column-gap: 7mm; }
+ol.leyenda li { counter-increment: ley; position: relative; padding-left: 8mm; margin-bottom: 2mm; break-inside: avoid; font-size: 9pt; }
+ol.leyenda li::before { content: counter(ley); position: absolute; left: 0; top: 0; width: 5.5mm; height: 5.5mm; border-radius: 50%; background: #e0312b; color: #fff; font-weight: 800; font-size: 7.5pt; display: flex; align-items: center; justify-content: center; }
+
+/* Cajas */
+.caja { border-radius: 2mm; padding: 3mm 4mm; margin: 3mm 0; break-inside: avoid; font-size: 9.2pt; border-left: 1.2mm solid; }
+.consejo { background: var(--azul-claro); border-color: var(--azul); }
+.importante { background: var(--naranja-claro); border-color: var(--naranja); }
+
+/* Tarjetas */
+.tarjetas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 2mm 0 4mm; }
+.tarjeta { background: var(--fondo); border-radius: 2mm; padding: 3mm; font-size: 8.6pt; color: #333; break-inside: avoid; }
+.tarjeta b { display: block; font-size: 9.6pt; color: var(--negro); margin-bottom: 1mm; }
+
+/* Tablas */
+.tabla { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 8.8pt; break-inside: auto; }
+.tabla th { text-align: left; background: var(--negro); color: #fff; font-weight: 600; padding: 2mm 2.5mm; }
+.tabla td { padding: 2mm 2.5mm; border-bottom: 1px solid var(--gris-claro); vertical-align: top; }
+.tabla tr { break-inside: avoid; }
+.tabla.chica { font-size: 8.4pt; }
+.matriz td:not(:first-child), .matriz th:not(:first-child) { text-align: center; }
+.rol { display: inline-block; font-weight: 700; font-size: 8pt; padding: .8mm 2.5mm; border-radius: 10mm; white-space: nowrap; }
+.rol-admin { background: var(--negro); color: #fff; } .rol-enc { background: var(--azul-claro); color: var(--azul); }
+.rol-gremio { background: var(--verde-claro); color: var(--verde); } .rol-pend { background: var(--gris-claro); color: var(--gris); }
+.chip { display: inline-block; font-weight: 700; font-size: 7.8pt; padding: .3mm 2mm; border-radius: 10mm; }
+.chip.verde { background: var(--verde-claro); color: var(--verde); } .chip.azul { background: var(--azul-claro); color: var(--azul); }
+.chip.naranja { background: var(--naranja-claro); color: var(--naranja); } .chip.rojo { background: var(--rojo-claro); color: var(--rojo); }
+
+dl.glosario { margin: 0 0 3mm; display: grid; grid-template-columns: 38mm 1fr; gap: 1.6mm 4mm; }
+dl.glosario dt { font-weight: 700; } dl.glosario dd { margin: 0; color: #333; }
+
+/* Capturas */
+figure.cap { margin: 2mm 0 5mm; break-inside: avoid; }
+figure.cap img { display: block; width: 100%; border-radius: 2mm; border: 1px solid #d6d4cd; box-shadow: 0 1mm 3mm rgba(0,0,0,.10); }
+figure.cap figcaption { font-size: 7.8pt; color: var(--gris); margin-top: 1.5mm; text-align: center; font-style: italic; }
+figure.cap.alto img { width: auto; max-width: 100%; max-height: 165mm; margin: 0 auto; }
+figure.cap.medio img { width: auto; max-width: 100%; max-height: 120mm; margin: 0 auto; }
+figure.cel img { width: 100%; max-width: 60mm; margin: 0 auto; border-radius: 4mm; border: 2.2mm solid #1b1b1b; }
+.marcas { position: relative; margin: 8mm 8mm 0; }
+.marcas .m { position: absolute; width: 6.2mm; height: 6.2mm; border-radius: 50%; background: #e0312b; color: #fff; font-weight: 800; font-size: 8pt;
+  display: flex; align-items: center; justify-content: center; border: .6mm solid #fff; box-shadow: 0 .5mm 1.5mm rgba(0,0,0,.35); }
+
+.dos { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; }
+.dos.ancho-form { grid-template-columns: 1fr 1fr; }
+.dos.ancho-cel { grid-template-columns: 1.6fr 1fr; }
+.dos.tres-cel { grid-template-columns: 1.3fr 1fr 1fr; }
+.dos.tres-iguales { grid-template-columns: 1fr 1fr 1fr; }
+.dos > * { min-width: 0; }
+.dos { break-inside: avoid; margin-bottom: 3mm; }
+.dos figure.cap img { max-height: 190mm; width: auto; max-width: 100%; margin: 0 auto; }
+
+.faq h4 { color: var(--azul); margin-top: 4mm; }
+.faq h4::before { content: "¿ "; display: none; }
+.faq p { padding-left: 0; }
+.cierre { margin-top: 12mm; text-align: center; color: var(--gris); }
+.cierre img { width: 55mm; margin-bottom: 3mm; }
+
+/* Vista en pantalla (sin paged.js) */
+@media screen { body { background: #888; } }
+
+.tt { string-set: capitulo content(text); }
+.marcas .m.izq { left: -7.5mm; transform: translateY(-50%); }
+.marcas .m.der { right: -7.5mm; transform: translateY(-50%); }
+.marcas .m.arriba { top: -7.5mm; transform: translateX(-50%); }
+
+figure.cap.angosta img { width: 72%; margin: 0 auto; }
+h1 { flex-wrap: nowrap; }
+h1 .solo-admin { white-space: nowrap; flex: none; }
+figure.cel img { max-width: 52mm; }

@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Instructivo de uso · ControlAr · Andorinas</title>
+<link rel="stylesheet" href="estilo.css">
+<script>window.PagedConfig = { auto: true, after: () => { window.__listo = true; } };</script>
+<script src="lib/paged.polyfill.js"></script>
+</head>
+<body>
+
+<!-- ═════════════════════════ PORTADA ═════════════════════════ -->
+<section class="portada">
+  <img class="portada-logo" src="marca/logo-blanco.png" alt="Andorinas · Ingeniería &amp; Construcción">
+  <div class="portada-texto">
+    <div class="portada-app">ControlAr</div>
+    <h1 class="portada-titulo">Instructivo de uso</h1>
+    <p class="portada-sub">Presupuestos, gastos, pagos, avance de obra, fotos y reclamos.<br>Guía paso a paso para administradores, encargados y gremios.</p>
+  </div>
+  <div class="portada-pie">
+    <div><strong>https://andorinas.github.io</strong></div>
+    <div>Versión 1 · Noviembre 2026</div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ ÍNDICE ═════════════════════════ -->
+<section class="indice">
+  <h2 class="titulo-indice">Índice</h2>
+  <p class="nota-indice">Tocá cualquier título para ir directo a esa página.</p>
+  <ol class="toc">
+    <li class="toc-parte">Primeros pasos</li>
+    <li><a href="#c1">1. Qué es ControlAr y quién la usa</a></li>
+    <li><a href="#c2">2. Antes de empezar: dirección, celular y palabras clave</a></li>
+    <li class="toc-sub"><a href="#c2-celu">Instalar la app en el celular</a></li>
+    <li class="toc-sub"><a href="#c2-palabras">Palabras que vas a ver</a></li>
+    <li class="toc-sub"><a href="#c2-formato">Cómo escribir fechas e importes</a></li>
+    <li><a href="#c3">3. Entrar a la app</a></li>
+    <li class="toc-sub"><a href="#c3-cuenta">Crear tu cuenta</a></li>
+    <li class="toc-sub"><a href="#c3-ingresar">Ingresar</a></li>
+    <li class="toc-sub"><a href="#c3-olvide">Olvidé mi contraseña</a></li>
+    <li class="toc-sub"><a href="#c3-cambiar">Cambiar la contraseña y salir</a></li>
+    <li><a href="#c4">4. Recorrido por la pantalla</a></li>
+
+    <li class="toc-parte">El día a día en la obra</li>
+    <li><a href="#c5">5. Cargar un gasto</a></li>
+    <li><a href="#c6">6. Registrar un pago</a></li>
+    <li class="toc-sub"><a href="#c6-moneda">Pagar en otra moneda</a></li>
+    <li><a href="#c7">7. Movimientos: buscar, revisar, corregir y anular</a></li>
+    <li><a href="#c8">8. Avance físico de la obra</a></li>
+    <li><a href="#c9">9. Fotos de la obra</a></li>
+    <li><a href="#c10">10. Reclamos</a></li>
+
+    <li class="toc-parte">Control y reportes</li>
+    <li><a href="#c11">11. El Tablero: cómo leer los números</a></li>
+    <li class="toc-sub"><a href="#c11-vista">Moneda, criterio y fecha de corte</a></li>
+    <li class="toc-sub"><a href="#c11-pendiente">Cotización pendiente y asteriscos</a></li>
+    <li><a href="#c12">12. Informes en PDF y Excel</a></li>
+
+    <li class="toc-parte">Administración (sólo administrador)</li>
+    <li><a href="#c13">13. Cargar el dólar BNA</a></li>
+    <li><a href="#c14">14. Crear una obra</a></li>
+    <li><a href="#c15">15. Configuración de la obra</a></li>
+    <li class="toc-sub"><a href="#c15-presupuesto">Presupuestos por rubro</a></li>
+    <li class="toc-sub"><a href="#c15-rubros">Datos, rubros y tipos de gasto</a></li>
+    <li class="toc-sub"><a href="#c15-pesos">Pesos de cada rubro en el avance</a></li>
+    <li class="toc-sub"><a href="#c15-eliminar">Eliminar una obra</a></li>
+    <li><a href="#c16">16. Usuarios: habilitar, asignar obras y gremios</a></li>
+    <li><a href="#c17">17. Revisar los partes de los gremios</a></li>
+    <li><a href="#c18">18. Copia de seguridad y mantenimiento</a></li>
+
+    <li class="toc-parte">Para gremios</li>
+    <li><a href="#c19">19. Guía para gremios (electricista, plomero, etc.)</a></li>
+
+    <li class="toc-parte">Ayuda</li>
+    <li><a href="#c20">20. Preguntas frecuentes y problemas comunes</a></li>
+    <li><a href="#c21">21. Resumen: quién puede hacer qué</a></li>
+  </ol>
+</section>
+
+<!-- ═════════════════════════ 1 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c1"><span class="num">1</span><span class="tt">Qué es ControlAr y quién la usa</span></h1>
+<p class="intro">ControlAr es la app de Andorinas para llevar el control de cada obra: <strong>cuánto se presupuestó, cuánto se gastó, cuánto se pagó, cuánto se debe y cuánto avanzó</strong>. Funciona en la computadora, la tableta y el celular, desde el navegador. No hay que instalar nada.</p>
+
+<h3>Lo que podés hacer</h3>
+<div class="tarjetas">
+  <div class="tarjeta"><b>Gastos y pagos</b>Compras al contado, a cuenta y contrataciones con anticipo, en pesos o en dólares, con foto del comprobante.</div>
+  <div class="tarjeta"><b>Avance de obra</b>El porcentaje de cada rubro y el avance general de la obra.</div>
+  <div class="tarjeta"><b>Tablero</b>Los números de la obra de un vistazo: comprometido, pagado, deuda, disponible y desvíos.</div>
+  <div class="tarjeta"><b>Informes</b>PDF ejecutivo para compartir y Excel con todo el detalle.</div>
+  <div class="tarjeta"><b>Fotos</b>Galería de la obra, con las fotos de la empresa y de los gremios.</div>
+  <div class="tarjeta"><b>Gremios</b>Electricistas, plomeros y demás informan su avance con fotos y hacen reclamos.</div>
+</div>
+
+<h3>Los cuatro tipos de usuario</h3>
+<table class="tabla">
+  <thead><tr><th>Usuario</th><th>Qué ve y qué hace</th></tr></thead>
+  <tbody>
+    <tr><td><span class="rol rol-admin">Administrador</span></td><td>Ve <b>todas</b> las obras. Crea obras, carga presupuestos y el dólar BNA, habilita usuarios y hace todo lo que hace un encargado.</td></tr>
+    <tr><td><span class="rol rol-enc">Encargado</span></td><td>Ve sólo las obras que le asignaron. Carga gastos, pagos, avances, fotos y reclamos, y aprueba los partes de los gremios.</td></tr>
+    <tr><td><span class="rol rol-gremio">Gremio</span></td><td>Electricista, plomero, etc. Ve sólo <b>sus rubros</b>, <b>nunca ve importes</b>. Informa avances con fotos y hace reclamos.</td></tr>
+    <tr><td><span class="rol rol-pend">Pendiente</span></td><td>Alguien que creó su cuenta y todavía no fue habilitado. No ve nada hasta que el administrador lo habilite.</td></tr>
+  </tbody>
+</table>
+<div class="caja consejo"><b>Cómo usar este instructivo.</b> Si sos encargado, leé los capítulos 1 a 12. Si sos administrador, leé todo. Si sos de un gremio, alcanza con los capítulos 2, 3 y 19. Las capturas usan <b>datos de ejemplo</b> (obra “Casa Los Aromos”), no son datos reales.</div>
+</section>
+
+<!-- ═════════════════════════ 2 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c2"><span class="num">2</span><span class="tt">Antes de empezar</span></h1>
+<h3>La dirección de la app</h3>
+<p>La app está en <a class="url" href="https://andorinas.github.io">https://andorinas.github.io</a>. Abrila desde cualquier navegador (Chrome, Safari, Edge). Guardala en favoritos o instalala en el celular como se explica abajo.</p>
+<div class="caja importante"><b>Importante:</b> la dirección anterior (pablojab-lgtm.github.io/controlar) ya no funciona. Si alguien la tiene guardada, que la borre y use la nueva.</div>
+
+<h2 id="c2-celu">Instalar la app en el celular</h2>
+<p>Así queda un ícono de Andorinas en la pantalla del celular y se abre como una app más.</p>
+<div class="dos">
+  <div>
+    <h4>En Android (Chrome)</h4>
+    <ol class="pasos">
+      <li>Abrí <b>andorinas.github.io</b> en Chrome.</li>
+      <li>Tocá el menú <b>⋮</b> (tres puntos, arriba a la derecha).</li>
+      <li>Elegí <b>“Agregar a la pantalla principal”</b> o <b>“Instalar aplicación”</b>.</li>
+      <li>Confirmá con <b>Agregar</b>. Aparece el ícono de Andorinas.</li>
+    </ol>
+  </div>
+  <div>
+    <h4>En iPhone (Safari)</h4>
+    <ol class="pasos">
+      <li>Abrí <b>andorinas.github.io</b> en <b>Safari</b> (no en otro navegador).</li>
+      <li>Tocá el botón <b>Compartir</b> (el cuadrado con una flecha hacia arriba).</li>
+      <li>Bajá y elegí <b>“Agregar a inicio”</b>.</li>
+      <li>Tocá <b>Agregar</b>, arriba a la derecha.</li>
+    </ol>
+  </div>
+</div>
+<div class="caja consejo"><b>¿Ya tenías un ícono viejo?</b> Borralo (mantené apretado el ícono → Eliminar) y volvé a agregarlo desde la dirección nueva. El celular guarda el ícono anterior y no lo cambia solo.</div>
+
+<h2 id="c2-palabras">Palabras que vas a ver</h2>
+<dl class="glosario">
+  <dt>Obra</dt><dd>Cada construcción que lleva la empresa. Todo se carga dentro de una obra.</dd>
+  <dt>Rubro</dt><dd>Una parte de la obra: Estructura, Albañilería, Electricidad, Instalación sanitaria, Pintura, etc.</dd>
+  <dt>Tipo de gasto</dt><dd>Qué se compró o contrató: Materiales, Mano de obra, Subcontratos, Alquileres, Fletes, Permisos.</dd>
+  <dt>Presupuesto vigente</dt><dd>Lo que se estimó gastar en cada rubro. Si se modifica, queda la versión anterior en el historial.</dd>
+  <dt>Comprometido</dt><dd>Todo lo que la obra ya se obligó a pagar: compras y contrataciones, estén pagadas o no.</dd>
+  <dt>Pagado</dt><dd>Lo que ya salió de caja.</dd>
+  <dt>Pendiente (deuda)</dt><dd>Lo comprometido que falta pagar.</dd>
+  <dt>Disponible para contratar</dt><dd>Presupuesto vigente menos comprometido. Lo que queda para seguir contratando.</dd>
+  <dt>Desvío</dt><dd>Un rubro que gastó más que su presupuesto, o que tiene gastos sin presupuesto.</dd>
+  <dt>Avance físico</dt><dd>Cuánto está hecho cada rubro, en porcentaje. No depende de lo pagado.</dd>
+  <dt>Peso</dt><dd>Cuánto pesa cada rubro en el avance total de la obra. Los pesos suman 100 %.</dd>
+  <dt>Dólar BNA</dt><dd>Cotización del Banco Nación, <b>dólar billete, venta</b>. La carga el administrador cada día hábil.</dd>
+  <dt>Fecha de corte</dt><dd>La fecha “hasta la cual” querés ver la obra. Sirve para ver cómo estaba en una fecha pasada.</dd>
+  <dt>Parte de avance</dt><dd>Lo que informa un gremio (“llegué al 55 %”). Pasa a ser oficial cuando la empresa lo aprueba.</dd>
+  <dt>Reclamo</dt><dd>Un pedido o problema entre la empresa y un gremio, con conversación y fotos.</dd>
+</dl>
+
+<h2 id="c2-formato">Cómo escribir fechas e importes</h2>
+<table class="tabla">
+  <thead><tr><th>Dato</th><th>Cómo se escribe</th><th>Ejemplos válidos</th></tr></thead>
+  <tbody>
+    <tr><td>Fechas</td><td>Día / mes / año. También podés tocar el 📅 para elegirla en un calendario.</td><td>20/11/2026 · 1/6/2026 · 01062026</td></tr>
+    <tr><td>Importes</td><td>Con punto para los miles y coma para los centavos, como en Argentina.</td><td>1.250.000 · 1.250.000,50 · 1250000</td></tr>
+    <tr><td>Porcentajes</td><td>Un número del 0 al 100. Se pueden usar decimales con coma.</td><td>45 · 12,5</td></tr>
+    <tr><td>Cotización</td><td>Pesos por cada dólar.</td><td>1.454,00 · 1454</td></tr>
+  </tbody>
+</table>
+<div class="caja consejo"><b>Campos obligatorios:</b> los que tienen un <span class="rojo">*</span> rojo al lado del nombre. Si falta algo, la app te avisa con un cartel rojo y te lleva hasta el error.</div>
+</section>
+
+<!-- ═════════════════════════ 3 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c3"><span class="num">3</span><span class="tt">Entrar a la app</span></h1>
+
+<h2 id="c3-cuenta">Crear tu cuenta (la primera vez)</h2>
+<div class="dos ancho-cel">
+  <div>
+    <ol class="pasos">
+      <li>Entrá a <b>andorinas.github.io</b> y tocá <b>Crear cuenta</b>.</li>
+      <li>Completá <b>Nombre y apellido</b>, <b>Email</b> y una <b>Contraseña</b> de al menos 8 caracteres.</li>
+      <li>Tocá <b>Crear cuenta</b>.</li>
+      <li>Te llega un <b>email para confirmar la cuenta</b>. Abrilo y tocá el enlace. Si no lo ves, buscá en Spam o Promociones.</li>
+      <li>Avisale al administrador de Andorinas que ya creaste la cuenta. Él te habilita y te asigna las obras.</li>
+    </ol>
+  </div>
+  <figure class="cap cel"><img src="capturas/02-crear-cuenta.png"><figcaption>Formulario “Crear cuenta”.</figcaption></figure>
+</div>
+<h3>Mientras esperás la habilitación</h3>
+<div class="dos ancho-cel">
+  <div><p>Si ingresás antes de que te habiliten, vas a ver el cartel <b>“Cuenta creada · pendiente de habilitación”</b>. Es normal. Cuando el administrador te habilite, tocá <b>“Ya me habilitaron”</b> y entrás.</p>
+  <p>Si dice <b>“Acceso desactivado”</b>, tu usuario fue dado de baja: hablá con el administrador.</p></div>
+  <figure class="cap cel"><img src="capturas/05-pendiente.png"><figcaption>Cuenta pendiente de habilitación.</figcaption></figure>
+</div>
+
+<h2 id="c3-ingresar">Ingresar</h2>
+<figure class="cap angosta"><img src="capturas/01-login.png"><figcaption>Pantalla de ingreso, en la computadora.</figcaption></figure>
+<ol class="pasos">
+  <li>Escribí tu <b>Email</b> y tu <b>Contraseña</b>.</li>
+  <li>Tocá <b>Ingresar</b>.</li>
+</ol>
+<p>La app recuerda tu sesión en ese dispositivo: la próxima vez entrás directo. Según tu tipo de usuario vas a ver la lista de <b>Obras</b> (administrador y encargado) o <b>Mis obras</b> (gremio).</p>
+<table class="tabla chica">
+  <thead><tr><th>Si aparece…</th><th>Qué significa</th></tr></thead>
+  <tbody>
+    <tr><td>Email o contraseña incorrectos</td><td>Revisá lo que escribiste. Si no te acordás, usá “Olvidé mi contraseña”.</td></tr>
+    <tr><td>Todavía no confirmaste tu email</td><td>Buscá el email de confirmación (también en Spam) y tocá el enlace.</td></tr>
+    <tr><td>Demasiados intentos</td><td>Esperá unos minutos y probá de nuevo.</td></tr>
+    <tr><td>La sesión venció</td><td>Volvé a ingresar con tu email y contraseña.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="c3-olvide">Olvidé mi contraseña</h2>
+<div class="dos ancho-cel">
+  <div>
+    <ol class="pasos">
+      <li>En la pantalla de ingreso, tocá <b>“Olvidé mi contraseña”</b>.</li>
+      <li>Escribí tu email y tocá <b>Enviar enlace</b>.</li>
+      <li>Abrí el email que te llega y tocá el enlace.</li>
+      <li>Se abre la app pidiendo una <b>contraseña nueva</b>: escribila dos veces y tocá <b>Guardar</b>. Listo, ya estás adentro.</li>
+    </ol>
+    <div class="caja importante"><b>Abrí el enlace en el mismo navegador</b> (y el mismo dispositivo) donde lo pediste. Si lo pediste en la compu y lo abrís en el celular, no funciona: pedí otro.</div>
+  </div>
+  <figure class="cap cel"><img src="capturas/04-login-celular.png"><figcaption>“Olvidé mi contraseña” en el celular.</figcaption></figure>
+</div>
+
+<h2 id="c3-cambiar">Cambiar la contraseña y salir</h2>
+<div class="dos ancho-cel">
+  <div>
+    <ol class="pasos">
+      <li>Tocá <b>tu nombre</b>, arriba a la derecha. En el celular, tocá la llave <b>🔑</b>.</li>
+      <li>Escribí la <b>contraseña actual</b> y dos veces la <b>nueva</b> (mínimo 8 caracteres).</li>
+      <li>Tocá <b>Guardar</b>. Se cierran tus sesiones en otros dispositivos.</li>
+    </ol>
+    <p>Para cerrar la sesión, tocá <b>Salir</b> (arriba a la derecha). Hacelo siempre si usaste una computadora prestada.</p>
+  </div>
+  <figure class="cap"><img src="capturas/11-mi-contrasena.png"><figcaption>Ventana “Mi contraseña”.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 4 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c4"><span class="num">4</span><span class="tt">Recorrido por la pantalla</span></h1>
+<h3>La lista de obras</h3>
+<p>Al entrar ves una tarjeta por obra con su estado, el <b>avance general</b> y lo <b>comprometido, pagado y pendiente</b> en pesos. Si una obra tiene rubros pasados de presupuesto o dólares sin cotizar, lo avisa con una etiqueta. Tocá una obra para abrirla.</p>
+<figure class="cap"><img src="capturas/10-obras.png"><figcaption>Lista de obras (administrador). El encargado ve sólo las obras que tiene asignadas.</figcaption></figure>
+
+<h3>Dentro de una obra</h3>
+<figure class="cap marcada">
+  <div class="marcas">
+    <img src="capturas/20-tablero.png">
+    <span class="m izq" style="top:10.6%">1</span>
+    <span class="m arriba" style="left:64.7%">2</span>
+    <span class="m arriba" style="left:78.4%">3</span>
+    <span class="m arriba" style="left:92.1%">4</span>
+    <span class="m izq" style="top:16.7%">5</span>
+    <span class="m izq" style="top:28.7%">6</span>
+    <span class="m der" style="top:38%">7</span>
+    <span class="m izq" style="top:56.9%">8</span>
+  </div>
+  <figcaption>La obra abierta, en la pestaña Tablero.</figcaption>
+</figure>
+<ol class="leyenda">
+  <li><b>‹ Volver</b> a la lista de obras (o tocá “ControlAr” arriba).</li>
+  <li><b>＋ Agregar gasto</b>: compras y contrataciones (capítulo 5).</li>
+  <li><b>$ Registrar pago</b>: pagos de lo que se debe (capítulo 6).</li>
+  <li><b>▲ Cargar avance</b>: porcentaje de avance de un rubro (capítulo 8).</li>
+  <li><b>Pestañas</b>: Tablero, Movimientos, Avance, Fotos, Reclamos y, para el administrador, Configuración. El <b>número rojo</b> indica cosas por atender: partes de gremios por revisar o reclamos sin resolver.</li>
+  <li><b>Cómo ver los números</b>: moneda, criterio del dólar y fecha de corte (capítulo 11).</li>
+  <li><b>Informes</b>: Compartir PDF, PDF ejecutivo y Excel (capítulo 12).</li>
+  <li><b>Indicadores</b> de la obra (capítulo 11).</li>
+</ol>
+
+<h3>En el celular</h3>
+<div class="dos tres-cel">
+  <div>
+    <p>En el celular la pantalla se acomoda sola. Los botones principales quedan <b>fijos abajo</b>: <b>＋ Gasto</b>, <b>$ Pago</b> y <b>▲ Avance</b>, para cargar rápido desde la obra.</p>
+    <p>Los formularios se abren a pantalla completa. Para cerrarlos sin guardar tocá la <b>✕</b> de arriba o <b>Cancelar</b>.</p>
+    <p>Los mensajes de “guardado” aparecen un momento abajo de la pantalla. Los errores aparecen en un <b>recuadro rojo</b> dentro del formulario.</p>
+  </div>
+  <figure class="cap cel"><img src="capturas/95-obras-celular.png"><figcaption>Obras en el celular.</figcaption></figure>
+  <figure class="cap cel"><img src="capturas/96-tablero-celular.png"><figcaption>Tablero con la barra de abajo.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 5 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c5"><span class="num">5</span><span class="tt">Cargar un gasto</span></h1>
+<p class="intro">Cada compra o contratación de la obra se carga como un <b>gasto</b>. Primero elegís cómo se paga. Lo hacen el administrador y los encargados.</p>
+<table class="tabla">
+  <thead><tr><th>Condición de pago</th><th>Cuándo usarla</th><th>Qué hace la app</th></tr></thead>
+  <tbody>
+    <tr><td><b>Contado</b></td><td>Se compró y se pagó todo en el momento.</td><td>Registra la compra y el pago completo en un solo paso. No queda deuda.</td></tr>
+    <tr><td><b>A cuenta</b></td><td>Se compró y se paga después (por ejemplo, cuenta corriente del corralón).</td><td>Queda la deuda con su saldo. Podés poner fecha de vencimiento.</td></tr>
+    <tr><td><b>Contratación</b></td><td>Un trabajo con importe acordado (por ejemplo, mano de obra de un contratista).</td><td>Admite anticipo, pagos parciales y vencimiento.</td></tr>
+  </tbody>
+</table>
+
+<div class="dos ancho-form">
+  <div>
+    <h3>Paso a paso</h3>
+    <ol class="pasos">
+      <li>Dentro de la obra, tocá <b>＋ Agregar gasto</b>.</li>
+      <li>Elegí la <b>Condición de pago</b>: Contado, A cuenta o Contratación.</li>
+      <li>Revisá la <b>Fecha</b> (viene la de hoy).</li>
+      <li>Escribí el <b>Concepto</b>, claro y corto: “Cables 2,5 mm”, “Hormigón losa PB”.</li>
+      <li>Elegí el <b>Rubro de obra</b> y el <b>Tipo de gasto</b>. Si no está el que necesitás, tocá <b>＋ Nuevo</b> al lado, escribí el nombre y tocá <b>Crear</b>.</li>
+      <li>Elegí la <b>Moneda</b> (ARS o USD) y escribí el <b>Importe</b>.</li>
+      <li>Escribí el <b>Proveedor</b> (opcional). Si ya existe, aparece en la lista; si es nuevo, se crea solo.</li>
+      <li>Si es <b>A cuenta</b> o <b>Contratación</b>: poné el <b>Vencimiento</b> y, si se pagó algo en el momento, el <b>Anticipo</b> con su fecha. La app te muestra cuánto <b>quedará pendiente</b>.</li>
+      <li>Tocá <b>📎 Foto o PDF</b> para adjuntar el comprobante: sacale una foto a la factura con el celular.</li>
+      <li>Tocá <b>Guardar gasto</b>.</li>
+    </ol>
+  </div>
+  <figure class="cap"><img src="capturas/41-gasto-completo.png"><figcaption>Formulario “Agregar gasto” con una contratación.</figcaption></figure>
+</div>
+<div class="caja consejo"><b>La cotización del dólar se completa sola.</b> Abajo del importe la app muestra el dólar BNA de esa fecha. Si todavía no está cargado, dice <b>“Cotización pendiente”</b>: guardá igual, se convierte solo cuando el administrador cargue la cotización.</div>
+<div class="caja consejo"><b>¿Se cortó internet o tocaste dos veces “Guardar”?</b> Tranquilo: la app no duplica el gasto. Si aparece “Ese gasto ya estaba registrado (no se duplicó)”, ya quedó guardado.</div>
+<p class="nota">Comprobantes admitidos: fotos (JPG, PNG, WEBP, HEIC) o PDF, de hasta 15 MB.</p>
+</section>
+
+<!-- ═════════════════════════ 6 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c6"><span class="num">6</span><span class="tt">Registrar un pago</span></h1>
+<p class="intro">Usalo para pagar <b>algo que ya está cargado y tiene saldo</b>: una compra a cuenta, una cuota de un contratista, el resto de un anticipo. Las compras al contado no se pagan acá: ya quedaron pagadas al cargarlas.</p>
+<div class="dos ancho-form">
+  <div>
+    <ol class="pasos">
+      <li>Tocá <b>$ Registrar pago</b>.</li>
+      <li>Elegí de la lista la compra o contratación que vas a pagar. Podés buscarla por concepto, proveedor o rubro. Cada una muestra su <b>saldo</b>.</li>
+      <li>Revisá la <b>Fecha del pago</b> y la <b>Moneda entregada</b>.</li>
+      <li>Escribí el <b>Dinero entregado</b>. Si pagás todo, tocá <b>“Pagar el saldo total”</b>.</li>
+      <li>Opcional: marcá <b>“Es un anticipo”</b>, escribí una <b>Nota</b> (“Certificado 2”) y adjuntá el recibo.</li>
+      <li>Tocá <b>Revisar pago</b>.</li>
+    </ol>
+  </div>
+  <figure class="cap"><img src="capturas/42-pago-elegir.png"><figcaption>Primero se elige qué se paga.</figcaption></figure>
+</div>
+<div class="dos">
+  <figure class="cap"><img src="capturas/43-pago.png"><figcaption>Datos del pago.</figcaption></figure>
+  <figure class="cap medio"><img src="capturas/44-pago-confirmar.png"><figcaption>Resumen antes de confirmar.</figcaption></figure>
+</div>
+<ol class="pasos" start="7">
+  <li>La app muestra un <b>resumen</b>: cuánto sale de caja, cuánto cancela de la deuda y el saldo antes y después.</li>
+  <li>Si está todo bien, tocá <b>Confirmar pago</b>. Si no, tocá <b>Modificar</b>.</li>
+</ol>
+<div class="caja importante">No se puede pagar más que el saldo. Si aparece “El pago supera el saldo”, revisá el importe.</div>
+
+<h2 id="c6-moneda">Pagar en otra moneda</h2>
+<div class="dos ancho-form">
+  <div>
+    <p>A veces una deuda en pesos se paga con dólares, o al revés. Elegí la otra moneda en <b>Moneda entregada</b> y aparece un recuadro azul:</p>
+    <ol class="pasos">
+      <li>En <b>Dinero entregado</b> poné lo que realmente se entregó (por ejemplo, USD 1.000).</li>
+      <li>Indicá <b>cuánto cancela de la deuda</b> según lo que acordaron (por ejemplo, ARS 1.460.000), <b>o</b> tocá <b>Tipo de cambio</b> y escribí el tipo de cambio acordado.</li>
+      <li>Tocá <b>Revisar pago</b> y confirmá.</li>
+    </ol>
+    <p class="nota">Por seguridad, si el tipo de cambio que resulta se aleja más de un 50 % del dólar BNA de ese día, la app avisa para que revises los importes.</p>
+  </div>
+  <figure class="cap"><img src="capturas/45-pago-otra-moneda.png"><figcaption>Pago en dólares de una deuda en pesos.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 7 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c7"><span class="num">7</span><span class="tt">Movimientos</span></h1>
+<p class="intro">La pestaña <b>Movimientos</b> es la lista de todas las compras y contrataciones de la obra, de la más nueva a la más vieja, con su estado de pago.</p>
+<figure class="cap"><img src="capturas/30-movimientos.png"><figcaption>Lista de movimientos con los filtros arriba.</figcaption></figure>
+<h3>Qué muestra cada movimiento</h3>
+<ul class="puntos">
+  <li>Fecha, concepto, rubro, tipo, proveedor y condición (Contado, A cuenta, Contratación). Si tiene vencimiento, lo muestra.</li>
+  <li>El estado: <span class="chip verde">Pagado</span> <span class="chip azul">Pago parcial</span> <span class="chip naranja">Pendiente</span> <span class="chip rojo">Vencido</span>.</li>
+  <li>El importe original, su equivalente en la otra moneda (≈) y el <b>saldo</b> que falta pagar. 📎 indica que tiene comprobante.</li>
+</ul>
+<h3>Filtrar</h3>
+<p>Arriba podés filtrar por <b>Desde</b> (fecha), <b>Rubro</b>, <b>Tipo de gasto</b>, <b>Proveedor</b> y <b>Estado de pago</b>. La fecha “Hasta” es la fecha de corte. Por ejemplo, para ver todo lo que se debe, elegí Estado de pago → <b>“Con saldo”</b>. Para volver a ver todo, tocá <b>Limpiar filtros</b>. En el celular los filtros se abren tocando <b>Filtros ▾</b>.</p>
+<p class="nota">Atajo: en el Tablero, tocar un importe o un indicador te lleva a Movimientos ya filtrado.</p>
+
+<h3>Ver el detalle</h3>
+<div class="dos ancho-form">
+  <div>
+    <p>Tocá un movimiento para ver todo: fechas, importes, cotización usada, quién lo cargó, el comprobante (<b>Ver comprobante</b>), la lista de <b>pagos</b> y el <b>historial de cambios</b>.</p>
+    <p>Desde el detalle también podés <b>Registrar pago</b>, <b>Corregir</b> o <b>Anular</b>.</p>
+  </div>
+  <figure class="cap"><img src="capturas/32-detalle.png"><figcaption>Detalle de un movimiento.</figcaption></figure>
+</div>
+
+<h3>Corregir un error</h3>
+<div class="dos ancho-form">
+  <div>
+    <ol class="pasos">
+      <li>Abrí el movimiento y tocá <b>Corregir</b>.</li>
+      <li>Cambiá lo que esté mal: fecha, importe, concepto, rubro, tipo, proveedor o vencimiento.</li>
+      <li>Escribí el <b>Motivo de la corrección</b> (es obligatorio) y tocá <b>Guardar corrección</b>.</li>
+    </ol>
+    <p>El cambio queda anotado en el historial, con tu nombre, la fecha y el motivo.</p>
+    <div class="caja importante">La <b>moneda</b> y la <b>condición de pago</b> no se pueden corregir. Si te equivocaste en eso, anulá el movimiento y cargalo de nuevo. Tampoco se puede bajar el importe por debajo de lo ya pagado.</div>
+  </div>
+  <figure class="cap"><img src="capturas/33-corregir.png"><figcaption>Corregir un movimiento.</figcaption></figure>
+</div>
+
+<h3>Anular</h3>
+<div class="dos ancho-form">
+  <div>
+    <p>Si algo se cargó por error (por ejemplo, dos veces), <b>se anula</b>: no se borra, queda tachado con tu nombre, la fecha y el motivo, y deja de sumar en los totales.</p>
+    <ol class="pasos">
+      <li>Abrí el movimiento y tocá <b>Anular</b>.</li>
+      <li>Escribí el <b>Motivo</b> y tocá <b>Confirmar anulación</b>.</li>
+    </ol>
+    <p>Al anular un movimiento se anulan también sus pagos. Para anular <b>sólo un pago</b>, usá <b>Anular pago</b> en la lista de pagos del detalle. Los pagos de compras al contado no se anulan por separado: se corrige o se anula el gasto completo.</p>
+  </div>
+  <figure class="cap"><img src="capturas/34-anular.png"><figcaption>Anular pide siempre un motivo.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 8 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c8"><span class="num">8</span><span class="tt">Avance físico de la obra</span></h1>
+<p class="intro">El avance dice <b>cuánto está hecho cada rubro</b>, en porcentaje. No tiene que ver con lo pagado. Lo cargan el administrador y los encargados, o llega de los gremios como “parte” (capítulo 17).</p>
+<div class="dos ancho-form">
+  <div>
+    <h3>Cargar avance</h3>
+    <ol class="pasos">
+      <li>Tocá <b>▲ Cargar avance</b> (o tocá un rubro en la pestaña Avance).</li>
+      <li>Elegí el <b>Rubro</b>. Abajo ves el <b>último avance cargado</b>.</li>
+      <li>Revisá la <b>Fecha</b>.</li>
+      <li>Escribí el <b>Avance acumulado (%)</b>: el <b>total</b> del rubro hasta hoy, no lo que se hizo esta semana. Si iba en 30 % y avanzó 10 más, escribí <b>40</b>. También podés usar la barra deslizable.</li>
+      <li>Opcional: un <b>Comentario</b> y una <b>📷 Foto</b>.</li>
+      <li>Tocá <b>Guardar avance</b>.</li>
+    </ol>
+  </div>
+  <figure class="cap"><img src="capturas/53-cargar-avance.png"><figcaption>Cargar avance de un rubro.</figcaption></figure>
+</div>
+<div class="caja importante"><b>Si el avance baja</b> (por ejemplo, se rehízo una losa), la app pide el <b>motivo de la corrección a la baja</b>. Queda registrado.</div>
+
+<h3>La pestaña Avance</h3>
+<ul class="puntos">
+  <li><b>Partes de avance de gremios</b>: lo que informaron los gremios, para aprobar o rechazar (capítulo 17).</li>
+  <li><b>Avance físico general</b> de la obra: la suma del avance de cada rubro según su peso. Si dice “Pendiente de ponderación”, faltan definir pesos (capítulo 15).</li>
+  <li><b>Por rubro</b>: el porcentaje de cada rubro y la fecha del último registro.</li>
+  <li><b>Peso de cada rubro</b> (sólo administrador).</li>
+  <li><b>Historial</b>: todos los avances cargados. Si uno está mal, tocá <b>Anular</b> y escribí el motivo.</li>
+</ul>
+<figure class="cap"><img src="capturas/55-avance-rubros.png"><figcaption>Avance por rubro.</figcaption></figure>
+<figure class="cap medio"><img src="capturas/56-historial-avance.png"><figcaption>Historial de avances.</figcaption></figure>
+</section>
+
+<!-- ═════════════════════════ 9 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c9"><span class="num">9</span><span class="tt">Fotos de la obra</span></h1>
+<p class="intro">La pestaña <b>Fotos</b> junta en un solo lugar las fotos de la empresa, las de los partes de avance de los gremios y las de los reclamos.</p>
+<figure class="cap"><img src="capturas/60-fotos.png"><figcaption>Galería de fotos de la obra.</figcaption></figure>
+<div class="dos ancho-form">
+  <div>
+    <h3>Agregar fotos</h3>
+    <ol class="pasos">
+      <li>Tocá <b>📷 Agregar fotos</b>.</li>
+      <li>Tocá el recuadro para elegirlas. Desde el celular podés sacarlas en el momento. Hasta 12 por vez.</li>
+      <li>Elegí el <b>Rubro</b> (o “General de la obra”), la <b>Fecha</b> y, si querés, una <b>Descripción</b> (“Hormigonado losa PB”).</li>
+      <li>Tocá <b>Agregar fotos</b> y esperá a que suban.</li>
+    </ol>
+    <h3>Ver y filtrar</h3>
+    <p>Arriba podés filtrar por rubro y por origen: Galería, Parte de avance o Reclamo. Tocá una foto para verla grande.</p>
+  </div>
+  <figure class="cap"><img src="capturas/61-agregar-fotos.png"><figcaption>Agregar fotos de obra.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 10 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c10"><span class="num">10</span><span class="tt">Reclamos</span></h1>
+<p class="intro">Los reclamos sirven para pedir o avisar algo <b>entre la empresa y un gremio</b>, en los dos sentidos: “faltan cajas de luz”, “hay una pérdida en el baño”. Cada reclamo tiene una conversación, fotos y un estado.</p>
+<p>Estados: <span class="chip rojo">Abierto</span> recién creado · <span class="chip naranja">En curso</span> alguien se está ocupando · <span class="chip verde">Resuelto</span> terminado.</p>
+<figure class="cap"><img src="capturas/71-reclamos-todos.png"><figcaption>Lista de reclamos (filtro “Todos”). Por defecto se ven los “Sin resolver”.</figcaption></figure>
+<div class="dos ancho-form">
+  <div>
+    <h3>Responder un reclamo</h3>
+    <ol class="pasos">
+      <li>Tocá el reclamo en la lista.</li>
+      <li>Leé la conversación y mirá las fotos.</li>
+      <li>Escribí tu respuesta en <b>Responder</b>. Podés sumar fotos.</li>
+      <li>Si corresponde, cambiá el <b>Estado</b> (En curso, Resuelto).</li>
+      <li>Tocá <b>Enviar</b>.</li>
+    </ol>
+  </div>
+  <figure class="cap"><img src="capturas/72-reclamo-detalle.png"><figcaption>Un reclamo con su conversación.</figcaption></figure>
+</div>
+<div class="dos ancho-form">
+  <div>
+    <h3>Hacer un reclamo a un gremio</h3>
+    <ol class="pasos">
+      <li>Tocá <b>＋ Reclamo a un gremio</b>.</li>
+      <li>Elegí el <b>Gremio</b> y, si querés, el <b>Rubro</b>.</li>
+      <li>Escribí el <b>Asunto</b> y el <b>Detalle</b>, y agregá fotos.</li>
+      <li>Tocá <b>Enviar reclamo</b>. El gremio lo ve en su app.</li>
+    </ol>
+  </div>
+  <figure class="cap"><img src="capturas/73-reclamo-nuevo.png"><figcaption>Nuevo reclamo a un gremio.</figcaption></figure>
+</div>
+<p class="nota">El número rojo en la pestaña Reclamos indica cuántos hay sin resolver.</p>
+</section>
+
+<!-- ═════════════════════════ 11 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c11"><span class="num">11</span><span class="tt">El Tablero: cómo leer los números</span></h1>
+<p class="intro">El Tablero responde las preguntas clave de la obra a la fecha de corte. Todo se calcula solo con lo que se fue cargando.</p>
+<table class="tabla">
+  <thead><tr><th>Indicador</th><th>Qué te dice</th></tr></thead>
+  <tbody>
+    <tr><td><b>¿Cuánto avanzó?</b></td><td>El avance físico general de la obra, y qué rubros todavía no tienen avance.</td></tr>
+    <tr><td><b>¿Cuánto comprometimos?</b></td><td>Todo lo comprado y contratado. Debajo, el presupuesto vigente total.</td></tr>
+    <tr><td><b>¿Cuánto pagamos?</b></td><td>Lo que ya se pagó.</td></tr>
+    <tr><td><b>¿Cuánto debemos?</b></td><td>Lo comprometido que falta pagar. Tocalo para ver qué se debe.</td></tr>
+    <tr><td><b>Disponible para contratar</b></td><td>Presupuesto vigente menos comprometido. Si se gastó de más dice <b>Exceso sobre presupuesto</b>, en rojo.</td></tr>
+    <tr><td><b>Diferencia de cambio</b></td><td>Aparece cuando hay dólares de por medio y el dólar cambió entre la compra y el pago. “Mayor costo” significa que, por la suba del dólar, la obra terminó pagando más de lo comprometido.</td></tr>
+  </tbody>
+</table>
+
+<h3>Más abajo</h3>
+<ul class="puntos">
+  <li><b>¿Qué rubros se pasaron de presupuesto?</b> La lista de desvíos, con cuánto se excedió cada uno. Si no hay, dice “Ningún rubro supera su presupuesto vigente”.</li>
+  <li><b>Por rubro / Por tipo de gasto</b>: la tabla con presupuesto, comprometido, pagado, pendiente, disponible y avance de cada rubro. <b>Tocá un importe</b> para ver los movimientos que lo forman. Tocá el avance de un rubro para cargarle avance.</li>
+  <li><b>Presupuesto vs comprometido</b>: el gráfico de barras. En rojo, lo que excede.</li>
+</ul>
+<figure class="cap"><img src="capturas/25-por-rubro.png"><figcaption>Tabla “Por rubro”: tocá cualquier importe para ver los movimientos.</figcaption></figure>
+<figure class="cap"><img src="capturas/26-grafico.png"><figcaption>Gráfico “Presupuesto vs comprometido”.</figcaption></figure>
+
+<h2 id="c11-vista">Moneda, criterio y fecha de corte</h2>
+<figure class="cap"><img src="capturas/23-dolar-manual.png"><figcaption>Los controles de vista, con “Dólar manual” elegido.</figcaption></figure>
+<dl class="glosario">
+  <dt>Moneda de visualización</dt><dd><b>ARS</b> o <b>USD</b>: en qué moneda ver todos los totales. Los importes cargados en la otra moneda se convierten.</dd>
+  <dt>BNA histórico</dt><dd>Cada gasto y pago se convierte con el dólar BNA <b>de su propia fecha</b>. Es la opción recomendada y la que viene por defecto.</dd>
+  <dt>Dólar manual</dt><dd>Todo se convierte con <b>un solo valor</b> que elegís vos (por ejemplo, para una estimación). Escribí el valor y tocá <b>Aplicar</b>. Ese valor queda guardado para la obra y lo ven todos los usuarios. Para volver, tocá <b>BNA histórico</b>.</dd>
+  <dt>Fecha de corte</dt><dd>Muestra la obra <b>como estaba en esa fecha</b>: sólo cuenta lo cargado hasta ese día, con el presupuesto y el avance vigentes en ese momento. Para volver al día de hoy tocá <b>Hoy</b>. Cada vez que abrís una obra, la fecha de corte vuelve a ser hoy.</dd>
+</dl>
+<p class="nota">En el celular, estos controles están resumidos en una línea (“ARS · BNA histórico · Corte …”). Tocá <b>Cambiar</b> para abrirlos.</p>
+
+<h2 id="c11-pendiente">Cotización pendiente y asteriscos (*)</h2>
+<p>Si hay gastos o pagos de una fecha cuya cotización todavía no se cargó, la app no los puede convertir. Entonces:</p>
+<ul class="puntos">
+  <li>Aparece un aviso amarillo <b>“Totales incompletos”</b>, con la lista de lo que falta convertir.</li>
+  <li>Los importes afectados llevan un <b>asterisco (*)</b>: quiere decir que no incluyen esos montos.</li>
+  <li>Se arregla solo cuando el administrador carga la cotización de esas fechas (capítulo 13).</li>
+</ul>
+<div class="caja consejo">Las compras de un <b>sábado, domingo o feriado</b> quedan pendientes hasta que se carga la cotización del día hábil siguiente; entonces toman la del último día hábil anterior.</div>
+</section>
+
+<!-- ═════════════════════════ 12 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c12"><span class="num">12</span><span class="tt">Informes en PDF y Excel</span></h1>
+<p class="intro">Los informes salen con <b>los mismos números que ves en pantalla</b>: misma moneda, mismo criterio, misma fecha de corte y mismos filtros. Elegí primero cómo querés ver la obra y después descargá.</p>
+<table class="tabla">
+  <thead><tr><th>Botón</th><th>Qué hace</th></tr></thead>
+  <tbody>
+    <tr><td><b>⇪ Compartir PDF</b></td><td>Arma el PDF y abre el menú de compartir del celular (WhatsApp, mail, etc.). Si el equipo no lo permite, lo descarga.</td></tr>
+    <tr><td><b>⬇ PDF ejecutivo</b></td><td>Descarga un informe de pocas páginas con el logo de Andorinas: avance, indicadores, desvíos, resumen por rubro y por tipo de gasto, y el resumen de partes y reclamos de los gremios.</td></tr>
+    <tr><td><b>⬇ Excel</b></td><td>Descarga una planilla con todo el detalle, en hojas: Parámetros, Resumen por rubro, Por tipo de gasto, Gastos y contrataciones, Pagos, Avances, Partes de avance, Reclamos y Fotos.</td></tr>
+  </tbody>
+</table>
+<p>El archivo se llama con el nombre de la obra, la fecha de corte y la moneda; por ejemplo: <code>Casa_Los_Aromos_corte_20-11-2026_ARS.pdf</code>.</p>
+<div class="caja consejo">Si el informe tiene importes con <b>*</b>, faltaba alguna cotización. En el Excel, la hoja <b>Parámetros</b> indica si los totales están completos y cuáles importes faltan convertir.</div>
+</section>
+
+<!-- ═════════════════════════ 13 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c13"><span class="num">13</span><span class="tt">Cargar el dólar BNA</span> <span class="solo-admin">Sólo administrador</span></h1>
+<p class="intro">La app convierte pesos y dólares con la cotización del <b>Banco Nación, dólar billete, venta</b>. El administrador la carga a mano, <b>idealmente cada día hábil</b>. Los encargados pueden ver el historial.</p>
+<figure class="cap"><img src="capturas/13-dolar-bna.png"><figcaption>Página “Dólar BNA”: historial a la izquierda y carga a la derecha.</figcaption></figure>
+<h3>Paso a paso</h3>
+<ol class="pasos">
+  <li>Buscá el valor en <b>bna.com.ar</b> → Personas → Cotizaciones → <b>Billetes</b> → Dólar U.S.A → columna <b>Venta</b>.</li>
+  <li>En ControlAr, tocá <b>Dólar BNA</b> en la barra de arriba.</li>
+  <li>En <b>Cargar cotización</b>, revisá la <b>Fecha de publicación</b> (viene la de hoy).</li>
+  <li>Escribí el valor de <b>Venta</b>, por ejemplo <b>1.454,00</b>.</li>
+  <li>Tocá <b>Guardar cotización</b>. La app avisa cuántos movimientos pendientes se completaron.</li>
+</ol>
+<div class="caja consejo"><b>¿Te olvidaste de algunos días?</b> Cargalos con su fecha cuando puedas: los gastos de esos días se actualizan solos. Fines de semana y feriados no hace falta cargarlos.</div>
+<div class="dos ancho-form">
+  <div>
+    <h3>Corregir una cotización mal cargada</h3>
+    <ol class="pasos">
+      <li>Elegí la misma fecha. La app avisa que ya hay una cotización y muestra el valor.</li>
+      <li>Escribí el valor correcto y el <b>Motivo de la corrección</b>.</li>
+      <li>Dejá marcado <b>“Actualizar los movimientos que usaron el valor anterior”</b> si fue un error de tipeo.</li>
+      <li>Tocá <b>Guardar cotización</b>. El valor viejo queda en el historial como “Reemplazada”.</li>
+    </ol>
+  </div>
+  <figure class="cap"><img src="capturas/14-dolar-correccion.png"><figcaption>Corrección de una cotización ya cargada.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 14 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c14"><span class="num">14</span><span class="tt">Crear una obra</span> <span class="solo-admin">Sólo administrador</span></h1>
+<div class="dos ancho-form">
+  <div>
+    <ol class="pasos">
+      <li>En la lista de obras, tocá <b>+ Nueva obra</b>.</li>
+      <li>Escribí el <b>Nombre de la obra</b>, la <b>Ubicación</b> (opcional) y la <b>Fecha de inicio</b>.</li>
+      <li>Elegí el <b>Estado</b>: Planificada, En curso, Pausada o Finalizada.</li>
+      <li>En <b>Rubros de la obra</b> vienen tildados los rubros habituales. Destildá los que no apliquen, ordenalos con ↑ ↓ y agregá rubros propios escribiendo el nombre y tocando <b>Agregar</b>.</li>
+      <li>En <b>Encargados asignados</b>, tildá quiénes van a trabajar en esta obra.</li>
+      <li>Tocá <b>Crear obra</b>. La app te lleva a la Configuración para cargar presupuestos y pesos.</li>
+    </ol>
+    <div class="caja consejo">Para una obra terminada no la borres: cambiá su estado a <b>Finalizada</b>. Queda al final de la lista con toda su información.</div>
+  </div>
+  <figure class="cap alto"><img src="capturas/12-nueva-obra.png"><figcaption>Formulario “Nueva obra”.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 15 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c15"><span class="num">15</span><span class="tt">Configuración de la obra</span> <span class="solo-admin">Sólo administrador</span></h1>
+<p class="intro">En la pestaña <b>Configuración</b> se cargan los presupuestos, los datos de la obra, los rubros y los tipos de gasto. Al final está la opción para eliminar una obra.</p>
+
+
+<h2 id="c15-presupuesto">Presupuestos por rubro</h2>
+<ol class="pasos">
+  <li>En <b>Presupuesto por rubro</b>, tocá <b>Presupuestar</b> al lado del rubro (o <b>Modificar</b> si ya tiene).</li>
+  <li>Elegí la <b>Moneda</b> y escribí el <b>Importe</b>. Un presupuesto de 0 es distinto de “sin presupuestar”.</li>
+  <li><b>Fecha de referencia</b>: la fecha cuyo dólar BNA se usa para convertir el presupuesto a la otra moneda.</li>
+  <li><b>Vigente desde</b>: desde cuándo rige. El primer presupuesto rige desde el inicio de la obra.</li>
+  <li>Si es una modificación, escribí el <b>Motivo</b>.</li>
+  <li>Tocá <b>Guardar</b>.</li>
+</ol>
+<div class="dos">
+  <figure class="cap"><img src="capturas/80-presupuestos.png"><figcaption>Presupuesto por rubro, con su versión y cotización.</figcaption></figure>
+  <figure class="cap"><img src="capturas/81-presupuesto-modificar.png"><figcaption>Modificar un presupuesto crea una versión nueva.</figcaption></figure>
+</div>
+<p>Cada modificación crea una <b>versión nueva</b> (v2, v3…) y guarda la anterior con fecha, usuario y motivo. Tocá <b>Historial</b> para verlas. Con una fecha de corte anterior, el Tablero usa la versión que regía en ese momento.</p>
+
+<h2 id="c15-rubros">Datos de la obra, rubros y tipos de gasto</h2>
+<ul class="puntos">
+  <li><b>Datos de la obra</b>: nombre, ubicación, fecha de inicio, estado y encargados asignados. Tocá <b>Guardar datos</b>.</li>
+  <li><b>Rubros</b>: podés <b>Renombrar</b>, <b>Desactivar</b> o <b>Reactivar</b> rubros, y agregar nuevos. Un rubro con gastos no se puede desactivar (primero hay que anular o mover esos gastos). Al reactivar un rubro, hay que volver a darle su peso.</li>
+  <li><b>Tipos de gasto</b>: son los mismos para toda la empresa. Podés agregar nuevos. Los encargados también pueden crearlos desde el formulario de gasto.</li>
+</ul>
+<div class="dos tres-iguales">
+  <figure class="cap"><img src="capturas/83-datos-obra.png"><figcaption>Datos de la obra.</figcaption></figure>
+  <figure class="cap"><img src="capturas/84-rubros.png"><figcaption>Rubros.</figcaption></figure>
+  <figure class="cap"><img src="capturas/85-tipos.png"><figcaption>Tipos de gasto.</figcaption></figure>
+</div>
+
+<h2 id="c15-pesos">Pesos de cada rubro en el avance</h2>
+<p>Para que la app calcule el <b>avance general</b> de la obra, cada rubro tiene que tener un <b>peso</b> y los pesos tienen que <b>sumar 100 %</b>. Por ejemplo: Estructura 25 %, Albañilería 20 %, Electricidad 12 %…</p>
+<ol class="pasos">
+  <li>Andá a la pestaña <b>Avance</b>, panel <b>“Peso de cada rubro en el avance general”</b>.</li>
+  <li>Escribí el porcentaje de cada rubro. Arriba ves cuánto llevás asignado y cuánto falta.</li>
+  <li>El enlace <b>“+ x %”</b> al lado de un rubro le suma lo que falta para llegar a 100.</li>
+  <li>Tocá <b>Guardar pesos</b>.</li>
+</ol>
+<div class="caja importante">Mientras los pesos no sumen 100 %, el avance general dice <b>“Pendiente de ponderación”</b>.</div>
+<figure class="cap"><img src="capturas/54-pesos.png"><figcaption>Pesos de cada rubro: en el ejemplo suman 100 %.</figcaption></figure>
+
+<h2 id="c15-eliminar">Eliminar una obra</h2>
+<div class="dos ancho-form">
+  <div>
+    <p>Borra <b>para siempre</b> la obra con todos sus gastos, pagos, avances, comprobantes, fotos, partes y reclamos. <b>No se puede deshacer.</b> Usalo sólo para obras de prueba o cargadas por error.</p>
+    <ol class="pasos">
+      <li>Al final de Configuración, tocá <b>Eliminar esta obra…</b></li>
+      <li>Escribí el <b>nombre exacto</b> de la obra para confirmar.</li>
+      <li>Tocá <b>Eliminar definitivamente</b>.</li>
+    </ol>
+  </div>
+  <figure class="cap"><img src="capturas/82-eliminar.png"><figcaption>Para eliminar hay que escribir el nombre de la obra.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 16 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c16"><span class="num">16</span><span class="tt">Usuarios</span> <span class="solo-admin">Sólo administrador</span></h1>
+<p class="intro">En <b>Usuarios</b> (barra de arriba) se habilita a quienes crearon su cuenta, se asignan obras y rubros, y se descarga la copia de seguridad.</p>
+<figure class="cap"><img src="capturas/92-usuarios-cabecera.png"><figcaption>Arriba de Usuarios: la dirección para compartir y la copia de seguridad.</figcaption></figure>
+<h3>Sumar a alguien nuevo</h3>
+<ol class="pasos">
+  <li>Pasale la dirección <b>andorinas.github.io</b> y pedile que toque <b>Crear cuenta</b> y confirme su email.</li>
+  <li>Aparece en <b>Esperando habilitación</b>. Elegí cómo habilitarlo:
+    <ul>
+      <li><b>Habilitar encargado</b>: para quien carga gastos, pagos y avances. Después tildá sus <b>obras asignadas</b>.</li>
+      <li><b>Gremio</b>: para electricistas, plomeros, etc. Después tocá <b>Asignar rubros</b> y tildá sus rubros en cada obra.</li>
+      <li><b>Administrador</b>: acceso total. La app pide confirmación.</li>
+      <li><b>Rechazar</b>: si no corresponde darle acceso.</li>
+    </ul>
+  </li>
+  <li>Avisale que ya puede entrar (o que toque “Ya me habilitaron”).</li>
+</ol>
+<figure class="cap"><img src="capturas/90-usuarios.png"><figcaption>Una persona esperando habilitación.</figcaption></figure>
+<figure class="cap alto"><img src="capturas/91-rubros-gremio.png"><figcaption>El equipo: obras de cada encargado y rubros de cada gremio (abierto con “Asignar rubros”).</figcaption></figure>
+<h3>El equipo</h3>
+<ul class="puntos">
+  <li><b>Obras asignadas</b> de cada encargado: tildá o destildá y se guarda solo.</li>
+  <li><b>Asignar rubros</b> de cada gremio: un gremio sólo ve las obras donde tiene rubros asignados.</li>
+  <li><b>Hacer administrador</b> / <b>Pasar a encargado</b>: cambia el tipo de usuario.</li>
+  <li><b>Desactivar</b>: le quita el acceso sin borrar lo que cargó. <b>Reactivar</b> lo devuelve.</li>
+</ul>
+<p class="nota">No podés quitarte a vos mismo el rol de administrador ni desactivarte. Si alguien olvida su contraseña, la recupera solo con “Olvidé mi contraseña”: el administrador no ve ni cambia contraseñas.</p>
+</section>
+
+<!-- ═════════════════════════ 17 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c17"><span class="num">17</span><span class="tt">Revisar los partes de los gremios</span></h1>
+<p class="intro">Cuando un gremio informa su avance, llega un <b>parte</b> a la pestaña <b>Avance</b> (con un número rojo en la pestaña). El parte <b>no cuenta</b> hasta que la empresa lo revisa. Lo pueden revisar el administrador y los encargados de la obra.</p>
+<figure class="cap"><img src="capturas/51-partes.png"><figcaption>Partes pendientes de aprobación, con las fotos que mandó el gremio.</figcaption></figure>
+<div>
+  <div>
+    <ol class="pasos">
+      <li>Entrá a la pestaña <b>Avance</b>. Arriba están los <b>Partes de avance de gremios</b>.</li>
+      <li>Mirá el porcentaje, el comentario y las fotos. Tocá una foto para verla grande.</li>
+      <li>Si está bien, tocá <b>✓ Aprobar</b>: pasa a ser el avance oficial del rubro.</li>
+      <li>Si no, tocá <b>Rechazar…</b>, escribí el motivo y tocá <b>Rechazar</b>. El gremio ve el motivo y puede mandar otro parte.</li>
+    </ol>
+    <p>También podés <b>Aprobar con nota</b> para dejarle un comentario. Si el parte baja el avance que ya estaba cargado, la app pide un motivo.</p>
+    <p>Con <b>Ver historial</b> ves todos los partes: aprobados, rechazados y pendientes.</p>
+  </div>
+  <figure class="cap"><img src="capturas/52-rechazar.png"><figcaption>Rechazar pide el motivo.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 18 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c18"><span class="num">18</span><span class="tt">Copia de seguridad y mantenimiento</span> <span class="solo-admin">Sólo administrador</span></h1>
+<h3>Copia de seguridad</h3>
+<ol class="pasos">
+  <li>Andá a <b>Usuarios</b> y tocá <b>⬇ Descargar copia de seguridad</b>.</li>
+  <li>Se descarga un archivo <code>controlar-respaldo-…json</code> con las obras, rubros, presupuestos, gastos, pagos, avances, cotizaciones y usuarios.</li>
+  <li>Guardalo <b>fuera de la app</b> (Google Drive, un pendrive, el mail). Hacelo al menos <b>una vez por semana</b>.</li>
+</ol>
+<div class="caja importante">La copia <b>no incluye</b> los archivos de fotos y comprobantes, ni los partes, reclamos y fotos de los gremios. Para eso, descargá también el <b>Excel</b> de cada obra.</div>
+<h3>Rutina recomendada</h3>
+<table class="tabla">
+  <thead><tr><th>Cuándo</th><th>Qué hacer</th></tr></thead>
+  <tbody>
+    <tr><td>Cada día hábil</td><td>Cargar el dólar BNA (capítulo 13).</td></tr>
+    <tr><td>Cada semana</td><td>Descargar la copia de seguridad. Revisar partes y reclamos pendientes.</td></tr>
+    <tr><td>Cada mes</td><td>Actualizar el avance de cada rubro y mandar el PDF ejecutivo a quien corresponda.</td></tr>
+    <tr><td>Al terminar una obra</td><td>Cambiar su estado a <b>Finalizada</b> y guardar su Excel.</td></tr>
+  </tbody>
+</table>
+<h3>Sobre el servicio</h3>
+<ul class="puntos">
+  <li>La app usa servicios gratuitos. Si nadie la usa por mucho tiempo, la base de datos puede “dormirse”. Hay una tarea automática que la mantiene despierta. Si un día la app no carga datos, avisale a quien la administra técnicamente: se reactiva sin perder información.</li>
+  <li>Los emails de confirmación y recuperación de contraseña tienen un límite de pocos por hora. Si no llega, esperá un rato antes de pedir otro.</li>
+  <li>Espacio: alcanza para años de movimientos. Lo que más ocupa son las fotos.</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════ 19 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c19"><span class="num">19</span><span class="tt">Guía para gremios</span></h1>
+<p class="intro">Esta parte es para electricistas, plomeros y demás gremios. Desde el celular vas a poder <b>informar tu avance con fotos</b> y <b>hacer reclamos</b> a la empresa. Sólo ves <b>tus rubros</b> y <b>no ves importes</b>.</p>
+<div class="caja consejo"><b>Primera vez:</b> creá tu cuenta como explica el <a href="#c3-cuenta">capítulo 3</a> y avisale a la empresa para que te habilite como gremio y te asigne tus rubros. Te conviene instalar la app en el celular (<a href="#c2-celu">capítulo 2</a>).</div>
+
+<div class="dos tres-cel">
+  <div>
+    <h3>Tu pantalla</h3>
+    <p>Al entrar ves <b>Mis obras</b>. Si trabajás en una sola, entrás directo. Arriba dice <b>“Tus rubros”</b>.</p>
+    <p>Tenés tres pestañas:</p>
+    <ul class="puntos">
+      <li><b>Mis avances</b>: los partes que mandaste y su estado.</li>
+      <li><b>Reclamos</b>: los tuyos y los que te hizo la empresa.</li>
+      <li><b>Mis fotos</b>: todas las fotos que subiste.</li>
+    </ul>
+    <p>Abajo tenés dos botones grandes: <b>▲ Avance</b> y <b>! Reclamo</b>.</p>
+  </div>
+  <figure class="cap cel"><img src="capturas/A0-gremio-obra.png"><figcaption>Pantalla del gremio.</figcaption></figure>
+  <figure class="cap cel"><img src="capturas/A1-gremio-reclamos.png"><figcaption>Reclamos del gremio.</figcaption></figure>
+</div>
+
+<div class="dos ancho-cel">
+  <div>
+    <h3>Informar tu avance</h3>
+    <ol class="pasos">
+      <li>Tocá <b>▲ Avance</b>.</li>
+      <li>Elegí el <b>Rubro</b>. Ves tu último parte.</li>
+      <li>Revisá la <b>Fecha</b>.</li>
+      <li>Escribí el <b>Avance acumulado (%)</b>: cuánto está hecho <b>en total</b> tu rubro, no lo de esta semana. Si ibas en 40 % y avanzaste 15 más, poné <b>55</b>.</li>
+      <li>Escribí qué se hizo en <b>Comentario</b>.</li>
+      <li>Sacá o elegí las <b>Fotos del avance</b> (hasta 8).</li>
+      <li>Tocá <b>Enviar parte</b>.</li>
+    </ol>
+    <p>Tu parte queda <span class="chip naranja">Pendiente de aprobación</span>. Cuando la empresa lo revisa pasa a <span class="chip verde">Aprobado</span> o <span class="chip rojo">Rechazado</span>, con el motivo. Si te lo rechazan, corregí lo que te piden y mandá otro.</p>
+  </div>
+  <figure class="cap cel"><img src="capturas/A3-gremio-parte.png"><figcaption>Informar avance.</figcaption></figure>
+</div>
+
+<div class="dos ancho-cel">
+  <div>
+    <h3>Hacer un reclamo</h3>
+    <ol class="pasos">
+      <li>Tocá <b>! Reclamo</b>.</li>
+      <li>Elegí el <b>Rubro</b>.</li>
+      <li>Escribí el <b>Asunto</b> (“Falta material”) y el <b>Detalle</b>.</li>
+      <li>Agregá fotos si ayudan.</li>
+      <li>Tocá <b>Enviar reclamo</b>.</li>
+    </ol>
+    <p>Para ver la respuesta, entrá a la pestaña <b>Reclamos</b> y tocá el reclamo. Podés contestar, mandar fotos y marcarlo como <b>Resuelto</b> cuando se solucione.</p>
+    <div class="caja consejo"><b>¿Olvidaste tu contraseña?</b> Tocá <b>Salir</b> y, en la pantalla de ingreso, <b>“Olvidé mi contraseña”</b> (<a href="#c3-olvide">capítulo 3</a>).</div>
+  </div>
+  <figure class="cap cel"><img src="capturas/A4-gremio-reclamo.png"><figcaption>Nuevo reclamo a la empresa.</figcaption></figure>
+</div>
+</section>
+
+<!-- ═════════════════════════ 20 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c20"><span class="num">20</span><span class="tt">Preguntas frecuentes y problemas comunes</span></h1>
+<div class="faq">
+  <h4>No me llega el email de confirmación o de contraseña.</h4>
+  <p>Buscá en Spam, Promociones o Correo no deseado. Esperá unos minutos: hay un límite de emails por hora. Revisá que el email esté bien escrito.</p>
+
+  <h4>El enlace del email dice que se abrió en otro navegador.</h4>
+  <p>Abrilo en el mismo navegador y dispositivo donde lo pediste, o pedí uno nuevo con “Olvidé mi contraseña”.</p>
+
+  <h4>Creé la cuenta pero no veo ninguna obra.</h4>
+  <p>Tu usuario tiene que estar habilitado y con obras (o rubros, si sos gremio) asignadas. Pedíselo al administrador.</p>
+
+  <h4>Me equivoqué al cargar un gasto.</h4>
+  <p>Abrilo en Movimientos y tocá <b>Corregir</b>. Si el error es la moneda o la condición de pago, <b>Anulalo</b> y cargalo de nuevo (<a href="#c7">capítulo 7</a>).</p>
+
+  <h4>Cargué algo dos veces.</h4>
+  <p>Anulá uno de los dos con el motivo “Cargado dos veces”. No se borra, pero deja de sumar.</p>
+
+  <h4>Se cortó internet justo cuando guardaba.</h4>
+  <p>Volvé a tocar Guardar cuando vuelva la conexión. Si ya se había guardado, la app avisa y no lo duplica.</p>
+
+  <h4>Veo “Cotización pendiente” o importes con asterisco (*).</h4>
+  <p>Falta cargar el dólar BNA de alguna fecha. Cuando el administrador lo cargue, se completa solo (<a href="#c11-pendiente">capítulo 11</a>).</p>
+
+  <h4>El avance general dice “Pendiente de ponderación”.</h4>
+  <p>Los pesos de los rubros no suman 100 %. El administrador los completa en la pestaña Avance (<a href="#c15-pesos">capítulo 15</a>).</p>
+
+  <h4>No se abre el comprobante o una foto.</h4>
+  <p>El navegador puede estar bloqueando ventanas emergentes: permitilas para andorinas.github.io. Si dejaste la pantalla abierta mucho tiempo, actualizala: los enlaces de fotos y comprobantes vencen por seguridad.</p>
+
+  <h4>No puedo desactivar un rubro.</h4>
+  <p>Tiene gastos cargados. Primero anulá esos gastos o corregilos para pasarlos a otro rubro.</p>
+
+  <h4>Veo una versión vieja de la app o el ícono viejo.</h4>
+  <p>Cerrá y volvé a abrir la app, o actualizá la página. Para el ícono, borralo y agregalo de nuevo (<a href="#c2-celu">capítulo 2</a>).</p>
+
+  <h4>Me sale “La sesión venció”.</h4>
+  <p>Volvé a ingresar con tu email y contraseña. No se pierde nada de lo guardado.</p>
+
+  <h4>Un gremio pasa a trabajar como encargado.</h4>
+  <p>Hoy un usuario gremio no se puede convertir en encargado desde la pantalla. Consultalo con quien administra la app.</p>
+</div>
+</section>
+
+<!-- ═════════════════════════ 21 ═════════════════════════ -->
+<section class="capitulo">
+<h1 id="c21"><span class="num">21</span><span class="tt">Resumen: quién puede hacer qué</span></h1>
+<table class="tabla matriz">
+  <thead><tr><th>Acción</th><th>Administrador</th><th>Encargado</th><th>Gremio</th></tr></thead>
+  <tbody>
+    <tr><td>Ver obras</td><td>Todas</td><td>Las asignadas</td><td>Las de sus rubros, sin importes</td></tr>
+    <tr><td>Crear obra, configurar, eliminar</td><td>✔</td><td>—</td><td>—</td></tr>
+    <tr><td>Cargar o corregir el dólar BNA</td><td>✔</td><td>Sólo ver</td><td>—</td></tr>
+    <tr><td>Elegir dólar manual para ver la obra</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><td>Agregar gasto y registrar pago</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><td>Corregir y anular movimientos</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><td>Crear rubros y tipos de gasto desde un gasto</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><td>Presupuestos, pesos y rubros (configuración)</td><td>✔</td><td>—</td><td>—</td></tr>
+    <tr><td>Cargar y anular avance</td><td>✔</td><td>✔</td><td>Manda partes</td></tr>
+    <tr><td>Aprobar o rechazar partes de gremios</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><td>Fotos</td><td>✔ todas</td><td>✔ todas</td><td>Las suyas</td></tr>
+    <tr><td>Reclamos</td><td>✔ con todos los gremios</td><td>✔ con todos los gremios</td><td>Los suyos</td></tr>
+    <tr><td>Informes PDF y Excel</td><td>✔</td><td>✔</td><td>—</td></tr>
+    <tr><td>Usuarios y copia de seguridad</td><td>✔</td><td>—</td><td>—</td></tr>
+  </tbody>
+</table>
+<div class="cierre">
+  <img src="marca/logo-negro.png" alt="Andorinas">
+  <p>¿Dudas o algo que no funciona como dice este instructivo? Consultalo con el administrador de ControlAr en Andorinas.</p>
+</div>
+</section>
+
+</body>
+</html>

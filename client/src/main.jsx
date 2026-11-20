@@ -71,6 +71,7 @@ function Cabecera() {
       <nav className="cabecera-nav">
         <Link to="/cotizaciones" className="link-cab">Dólar BNA</Link>
         {user.rol === 'admin' && <Link to="/usuarios" className="link-cab">Usuarios</Link>}
+        <a href="ayuda/" target="_blank" rel="noopener" className="link-cab">Ayuda</a>
         <button className="cabecera-user btn-texto-cab" title={`${user.email} · cambiar contraseña`} onClick={() => setClave(true)}>{user.nombre} · {user.rol === 'admin' ? 'Administrador' : 'Encargado'}</button>
         <button className="link-cab btn-texto-cab solo-celular" onClick={() => setClave(true)} aria-label="Mi contraseña">🔑</button>
         <button className="btn btn-fantasma btn-chico" onClick={logout}>Salir</button>

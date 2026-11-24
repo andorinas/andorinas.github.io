@@ -2,6 +2,19 @@
 
 > **Instalación actual:** la app está en **https://andorinas.github.io**, publicada desde el repositorio `andorinas/andorinas.github.io` (organización de GitHub **andorinas**). Esta guía queda como referencia para una instalación nueva.
 
+## Dónde está todo (titularidad y respaldos)
+
+| Qué | Dónde | Titulares |
+|---|---|---|
+| Código y publicación de la app | GitHub, organización **andorinas** → `andorinas/andorinas.github.io` | andorinaslp@gmail.com (empresa) y pablojab@gmail.com |
+| Base de datos, usuarios y archivos | Supabase, organización **Andorinas** → proyecto `controlar` (São Paulo) | andorinaslp@gmail.com (empresa) y pablojab@gmail.com |
+| Copias de seguridad | GitHub, repositorio **privado** `andorinas/respaldos` | los mismos dueños de la organización |
+
+* **Copia automática** todos los lunes a las 3:00 (Argentina): base de datos completa, usuarios, fotos y comprobantes. Cada semana queda en el historial, así que se puede volver a cualquier fecha. Para hacer una en el momento: `andorinas/respaldos` → Actions → *Copia de seguridad semanal* → **Run workflow**. Si falla, GitHub avisa por email. La guía para restaurar está en el README de ese repositorio.
+* La copia usa dos secretos guardados en GitHub (`SUPABASE_DB_PASSWORD` y `SUPABASE_SECRET_KEY`, la clave "respaldos" de Supabase). Si se cambia la contraseña de la base o se renueva esa clave, hay que actualizarlos ahí.
+* La empresa (andorinaslp@gmail.com) es dueña en las dos organizaciones; conviene que siempre haya **dos dueños**, para no perder el acceso si una cuenta queda bloqueada.
+* Contraseñas: nunca se escriben en este repositorio ni en el de respaldos. Guardarlas en un gestor de contraseñas de la empresa.
+
 Tiempo estimado: 20 minutos. Conviene crear las cuentas con un email de **Andorinas**, así la empresa queda como dueña de la app y de sus datos.
 
 ## 1. Supabase (datos y usuarios)

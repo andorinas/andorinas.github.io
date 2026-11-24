@@ -111,7 +111,11 @@ await cdp('Page.enable'); await cdp('Runtime.enable');
 
 // ── Sin sesión ────────────────────────────────────────────────────────────
 await paso('01-login', async () => {
-  await abrir('ninguno', '#/');
+  await abrir('ninguno', '#/'); await js(`(localStorage.removeItem('perfil-ingreso'), true)`);
+  await abrir('ninguno', '#/'); await foto('00-portada');
+  await abrir('ninguno', '#/', 390, 844, true); await foto('00-portada-celular');
+  await abrir('ninguno', '#/'); await js(`clic('Soy cliente')`); await espera(400); await foto('00-ingreso-cliente');
+  await js(`clic('Cambiar tipo de ingreso')`); await espera(300); await js(`clic('Administración de obra')`); await espera(400);
   await foto('01-login');
   
   await js(`clic('Ingresar', '[role=radio]')`); await js(`clic('Olvidé mi contraseña')`); await foto('03-olvide');
@@ -196,6 +200,22 @@ await paso('10-admin', async () => {
   await foto('90-usuarios', { selector: 'texto:Esperando habilitación|Habilitar encargado' });
   await foto('92-usuarios-cabecera', { selector: 'texto:Usuarios|Descargar copia de seguridad|Para sumar a alguien', margen: 0 });
   await js(`clic('Asignar rubros')`); await espera(600); await foto('91-rubros-gremio', { selector: 'texto:Equipo|Hacer administrador|Listo' });
+});
+
+// ── Portal de clientes ────────────────────────────────────────────────────
+await paso('P-portal', async () => {
+  await abrir('cliente', '#/', 1280, 900); await espera(4000);
+  await js(`(document.querySelectorAll('img').forEach((i) => { i.loading = 'eager'; }), true)`); await espera(3000); await foto('P1-cliente-portal', { completa: true });
+  await js(`clic('Consultas', '[role=radio]')`); await espera(1200); await foto('P2-cliente-consultas');
+  await abrir('cliente', '#/', 390, 844, true); await espera(4000);
+  await foto('P3-cliente-celular');
+  await js(`(document.querySelector('.calendario').scrollIntoView({ block: 'center' }), true)`); await espera(800); await foto('P4-cliente-celular-calendario');
+  await abrir('admin', '#/obras/1/diario', 1280, 900); await espera(4000);
+  await js(`(document.querySelectorAll('img').forEach((i) => { i.loading = 'eager'; }), true)`); await espera(3000); await foto('P5-empresa-diario', { completa: true });
+  await ir('#/obras/1/fotos', 'Fotos de la obra'); await espera(2500); await foto('P6-empresa-fotos', { selector: 'texto:Fotos de la obra|Todo origen' });
+  await ir('#/obras/1/cliente', 'Así ve esta obra'); await espera(3500); await foto('P7-empresa-vista-cliente');
+  await ir('#/obras/1/configuracion', 'Portal del cliente'); await foto('P8-empresa-config-portal', { selector: 'texto:Portal del cliente|Entrega prevista|Guardar' });
+  await ir('#/usuarios', 'Equipo'); await foto('P9-empresa-usuarios-cliente', { selector: 'texto:Familia Fernández|Ve las obras' });
 });
 
 // ── Celular (encargado) ───────────────────────────────────────────────────

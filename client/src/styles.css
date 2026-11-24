@@ -524,3 +524,15 @@ button.cal-dia:hover { border-color: var(--navy-2); }
 .foto-cliente { margin-top: 4px; border: 1.5px solid var(--linea); background: var(--papel); border-radius: 999px; padding: 3px 9px; font: inherit;
   font-size: .75rem; font-weight: 600; color: var(--gris); cursor: pointer; align-self: flex-start; }
 .foto-cliente.si { background: var(--ok-bg); border-color: #a6e4c1; color: var(--ok); }
+.cal-leyenda .cal-punto.cal-normal { background: #7fd3a5; border-color: #4fb880; }
+.cal-leyenda .cal-punto.cal-parcial { background: #f3c766; border-color: #dba73a; }
+.cal-leyenda .cal-punto.cal-no { background: #aab1bd; border-color: #8a93a2; }
+
+/* Portada: elegir tipo de ingreso */
+.perfiles { display: flex; flex-direction: column; gap: 10px; }
+.perfil-opcion { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 14px 16px; border: 1px solid var(--linea, #dcd8cf); border-radius: 12px; background: #fff; cursor: pointer; font: inherit; color: inherit; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.perfil-opcion:hover, .perfil-opcion:focus-visible { border-color: #1f3a5c; box-shadow: 0 4px 14px rgba(31,58,92,.12); transform: translateY(-1px); }
+.perfil-opcion > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.perfil-icono { font-size: 1.6rem; width: 2.4rem; text-align: center; flex: none; }
+.perfil-flecha { font-size: 1.6rem; color: #8a93a2; flex: none; }
+.perfil-volver { align-self: flex-start; }

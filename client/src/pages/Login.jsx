@@ -3,15 +3,35 @@ import { ingresar, registrarse, recuperarPassword } from '../datos.js';
 import { useAuth } from '../ctx.js';
 import { Marca, Aviso, Segmentado, useCargando } from '../components/ui.jsx';
 
+// Perfiles de la portada. El acceso es el mismo para todos: la app abre la pantalla que
+// corresponde según el rol de la cuenta; esto sólo orienta a quien entra.
+const PERFILES = [
+  { id: 'cliente', icono: '🏠', titulo: 'Soy cliente', texto: 'Seguí el avance de tu obra, fotos, lluvias y novedades.',
+    registro: 'Si Andorinas todavía no te dio acceso, creá tu cuenta y avisales para que te asignen la obra.' },
+  { id: 'proveedor', icono: '🛠️', titulo: 'Soy proveedor o gremio', texto: 'Cargá tu avance, fotos y respondé consultas.',
+    registro: 'Después de crear la cuenta, Andorinas te habilita y te asigna las obras donde trabajás.' },
+  { id: 'admin', icono: '📋', titulo: 'Administración de obra', texto: 'Presupuestos, gastos, pagos y avance. Equipo de Andorinas.',
+    registro: 'Después de crear la cuenta, el administrador te habilita y te asigna las obras.' },
+];
+const leerPerfil = () => { try { return localStorage.getItem('perfil-ingreso'); } catch { return null; } };
+const guardarPerfil = (v) => { try { if (v) localStorage.setItem('perfil-ingreso', v); else localStorage.removeItem('perfil-ingreso'); } catch { /* sin almacenamiento */ } };
+
 export default function Login() {
   const { setUser } = useAuth();
   const [modo, setModo] = useState('ingresar');
+  const [perfilId, setPerfilId] = useState(() => {
+    const guardado = leerPerfil();
+    if (PERFILES.some((x) => x.id === guardado)) return guardado;
+    return new URLSearchParams(window.location.search).has('code') ? 'admin' : null;
+  });
+  const perfil = PERFILES.find((x) => x.id === perfilId);
   const [f, setF] = useState({ email: '', password: '', nombre: '' });
   const [error, setError] = useState(() => (new URLSearchParams(window.location.search).has('code')
     ? 'No se pudo usar el enlace del email: abrilo en el mismo navegador donde lo pediste, o pedí uno nuevo con “Olvidé mi contraseña”.' : null));
   const [aviso, setAviso] = useState(null);
   const [cargando, run] = useCargando();
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const elegir = (id) => { setPerfilId(id); guardarPerfil(id); setModo('ingresar'); setError(null); setAviso(null); };
 
   const enviar = (e) => {
     e.preventDefault();
@@ -42,8 +62,25 @@ export default function Login() {
       </div>
       <form className="login-form" onSubmit={enviar}>
         <div className="login-marca"><Marca alto={120} /></div>
-        <h1>ControlAr</h1>
-        <p className="texto-suave">Presupuestos, gastos, pagos y avance de obra.</p>
+        {!perfil ? (
+          <>
+            <h1>Bienvenido</h1>
+            <p className="texto-suave">¿Cómo querés ingresar?</p>
+            <div className="perfiles">
+              {PERFILES.map((x) => (
+                <button type="button" key={x.id} className="perfil-opcion" onClick={() => elegir(x.id)}>
+                  <span className="perfil-icono" aria-hidden="true">{x.icono}</span>
+                  <span><strong>{x.titulo}</strong><span className="texto-suave chico">{x.texto}</span></span>
+                  <span className="perfil-flecha" aria-hidden="true">›</span>
+                </button>
+              ))}
+            </div>
+            <a href="ayuda/" target="_blank" rel="noopener" className="link chico">¿Cómo se usa? Ver videos e instructivo</a>
+          </>
+        ) : (<>
+        <button type="button" className="link chico perfil-volver" onClick={() => elegir(null)}>‹ Cambiar tipo de ingreso</button>
+        <h1><span aria-hidden="true">{perfil.icono} </span>{perfil.titulo}</h1>
+        <p className="texto-suave">{perfil.texto}</p>
         {modo !== 'recuperar' && <Segmentado value={modo} onChange={(m) => { setModo(m); setError(null); }} nombre="Acceso" opciones={[['ingresar', 'Ingresar'], ['registrarse', 'Crear cuenta']]} />}
         {error && <Aviso tipo="error">{error}</Aviso>}
         {aviso && <Aviso tipo="info">{aviso}</Aviso>}
@@ -62,8 +99,9 @@ export default function Login() {
         </button>
         {modo === 'ingresar' && <button type="button" className="link chico" onClick={() => { setModo('recuperar'); setError(null); }}>Olvidé mi contraseña</button>}
         {modo === 'recuperar' && <button type="button" className="link chico" onClick={() => setModo('ingresar')}>Volver a ingresar</button>}
-        {modo === 'registrarse' && <p className="texto-suave chico">Después de crear la cuenta, el administrador te habilita y te asigna las obras.</p>}
+        {modo === 'registrarse' && <p className="texto-suave chico">{perfil.registro}</p>}
         <a href="ayuda/" target="_blank" rel="noopener" className="link chico">¿Cómo se usa? Ver videos e instructivo</a>
+        </>)}
       </form>
     </main>
   );

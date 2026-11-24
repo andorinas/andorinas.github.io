@@ -93,7 +93,7 @@ export function resumenDias(dias, lluvia, desde, hasta) {
 function GraficoAvance({ serie }) {
   const puntos = serie.filter((s) => s.avance != null);
   if (puntos.length < 2) return <p className="texto-suave chico">La evolución aparece cuando haya avances en más de un mes.</p>;
-  const W = 600, H = 200, P = 30;
+  const W = 600, H = 200, P = 40;
   const t0 = new Date(puntos[0].fecha).getTime(), t1 = new Date(puntos.at(-1).fecha).getTime() || t0 + 1;
   const x = (f) => P + ((new Date(f).getTime() - t0) / Math.max(1, t1 - t0)) * (W - 2 * P);
   const y = (v) => H - P - (v / 100) * (H - 2 * P);

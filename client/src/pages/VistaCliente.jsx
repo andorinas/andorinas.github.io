@@ -17,11 +17,11 @@ export default function VistaCliente() {
   }, [obra.id, version]);
   return (
     <>
-      <div className="aviso aviso-info">
+      <div className="aviso aviso-info"><div>
         {clientes.length ? <>Clientes con acceso a esta obra: <strong>{clientes.map((c) => c.nombre).join(', ')}</strong>.</>
           : <>Esta obra todavía no tiene clientes con acceso.{user.rol === 'admin' ? ' Habilitalos en Usuarios como “Cliente” y asignales la obra.' : ''}</>}
         {' '}Las fotos se publican desde la pestaña Fotos y las novedades desde Diario.
-      </div>
+      </div></div>
       {error && <Aviso tipo="error">{error}</Aviso>}
       {p ? <PortalObra p={p} vistaPrevia /> : !error && <div className="esqueleto" />}
     </>

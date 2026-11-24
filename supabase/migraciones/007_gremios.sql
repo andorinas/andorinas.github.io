@@ -8,7 +8,7 @@
 
 -- ── Rol nuevo ───────────────────────────────────────────────────────────────
 alter table public.perfiles drop constraint if exists perfiles_rol_check;
-alter table public.perfiles add constraint perfiles_rol_check check (rol in ('pendiente', 'encargado', 'admin', 'gremio'));
+alter table public.perfiles add constraint perfiles_rol_check check (rol in ('pendiente', 'encargado', 'admin', 'gremio', 'cliente'));
 
 -- ── Tablas ──────────────────────────────────────────────────────────────────
 create table if not exists public.gremio_rubros (

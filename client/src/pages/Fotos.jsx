@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listarFotos, agregarFotos, subirFotos } from '../datos.js';
+import { listarFotos, agregarFotos, subirFotos, marcarFotoCliente } from '../datos.js';
 import { hoyISO } from '../lib.js';
 import { useObra, useToast } from '../ctx.js';
 import { Campo, FechaInput, Aviso, Sheet, useCargando } from '../components/ui.jsx';
@@ -52,6 +52,14 @@ export default function Fotos() {
   const [origen, setOrigen] = useState('');
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState(null);
+  const toast = useToast();
+  const alternarCliente = async (f) => {
+    try {
+      await marcarFotoCliente(f.id, !f.visible_cliente);
+      setFotos((l) => l.map((x) => (x.id === f.id ? { ...x, visible_cliente: !f.visible_cliente } : x)));
+      toast(f.visible_cliente ? 'Foto oculta para el cliente' : 'Ahora el cliente ve esta foto');
+    } catch (e) { toast(e.message, 'error'); }
+  };
   useEffect(() => { listarFotos(obra.id).then(setFotos).catch((e) => setError(e.message)); }, [obra.id, version]);
   const visibles = (fotos || []).filter((f) => (!rubro || String(f.rubro_id) === rubro) && (!origen || f.origen === origen));
   return (
@@ -60,7 +68,7 @@ export default function Fotos() {
         <h2>Fotos de la obra</h2>
         <button className="btn btn-primario" onClick={() => setSubiendo(true)}>📷 Agregar fotos</button>
       </div>
-      <p className="texto-suave chico">Incluye las fotos de la empresa, las de los partes de avance de los gremios y las de los reclamos.</p>
+      <p className="texto-suave chico">Incluye las fotos de la empresa, las de los partes de avance de los gremios, las de las novedades y las de los reclamos. Tocá “Sólo la empresa” / “La ve el cliente” para elegir qué fotos ve el cliente en su portal.</p>
       <div className="fila-inline filtros-fotos">
         <select value={rubro} onChange={(e) => setRubro(e.target.value)} aria-label="Filtrar por rubro">
           <option value="">Todos los rubros</option>
@@ -68,11 +76,11 @@ export default function Fotos() {
         </select>
         <select value={origen} onChange={(e) => setOrigen(e.target.value)} aria-label="Filtrar por origen">
           <option value="">Todo origen</option>
-          <option>Galería</option><option>Parte de avance</option><option>Reclamo</option>
+          <option>Galería</option><option>Parte de avance</option><option>Novedad</option><option>Reclamo</option>
         </select>
       </div>
       {error && <Aviso tipo="error">{error}</Aviso>}
-      {fotos === null ? <div className="esqueleto" /> : <GaleriaFotos fotos={visibles} />}
+      {fotos === null ? <div className="esqueleto" /> : <GaleriaFotos fotos={visibles} onToggleCliente={alternarCliente} />}
       {subiendo && <SubirFotos obra={obra} onClose={() => setSubiendo(false)} onListo={() => { setSubiendo(false); refrescar(); }} />}
     </section>
   );

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib.js';
-import { descargarRespaldo, asignacionesGremios, asignarRubrosGremio } from '../datos.js';
+import { descargarRespaldo, asignacionesGremios, asignarRubrosGremio, asignacionesClientes, asignarObrasCliente } from '../datos.js';
 import { useAuth, useToast } from '../ctx.js';
 import { Chip, Aviso, useCargando } from '../components/ui.jsx';
 
-const ROL = { admin: 'Administrador', encargado: 'Encargado', gremio: 'Gremio', pendiente: 'Pendiente' };
+const ROL = { admin: 'Administrador', encargado: 'Encargado', gremio: 'Gremio', cliente: 'Cliente', pendiente: 'Pendiente' };
 
 export default function Usuarios() {
   const { user } = useAuth();
@@ -16,7 +16,18 @@ export default function Usuarios() {
   const cargar = () => api('/api/usuarios').then(setLista).catch((e) => toast(e.message, 'error'));
   const [asig, setAsig] = useState(null);
   const cargarAsig = () => asignacionesGremios().then(setAsig).catch(() => {});
-  useEffect(() => { cargarAsig(); }, []);
+  const [asigCli, setAsigCli] = useState([]);
+  const cargarAsigCli = () => asignacionesClientes().then(setAsigCli).catch(() => {});
+  useEffect(() => { cargarAsig(); cargarAsigCli(); }, []);
+  const toggleObraCliente = async (u, oid) => {
+    if (guardando) return;
+    const mias = asigCli.filter((a) => a.usuario_id === u.id).map((a) => a.obra_id);
+    setGuardando(true);
+    try {
+      await asignarObrasCliente(u.id, mias.includes(oid) ? mias.filter((x) => x !== oid) : [...mias, oid]);
+      toast('Obras del cliente actualizadas'); await cargarAsigCli();
+    } catch (e) { toast(e.message, 'error'); } finally { setGuardando(false); }
+  };
   useEffect(() => { cargar(); api('/api/obras').then(setObras); }, []);
 
   const patch = async (u, body, msg) => { try { await api(`/api/usuarios/${u.id}`, { method: 'PATCH', body }); toast(msg); cargar(); } catch (e) { toast(e.message, 'error'); } };
@@ -41,7 +52,7 @@ export default function Usuarios() {
       </div>
       <Aviso tipo="info">
         Para sumar a alguien: compartile el enlace <strong>{enlace}</strong>. Crea su cuenta con “Crear cuenta”, aparece acá como <strong>pendiente</strong> y lo habilitás como encargado (eligiendo sus obras) o administrador.
-        Los <strong>gremios</strong> (electricista, plomero, etc.) sólo ven sus rubros asignados: informan avances con fotos y hacen reclamos, sin ver importes. Si alguien olvida la contraseña, la recupera desde “Olvidé mi contraseña”.
+        Los <strong>gremios</strong> (electricista, plomero, etc.) sólo ven sus rubros asignados: informan avances con fotos y hacen reclamos, sin ver importes. Los <strong>clientes</strong> ven sólo su obra en un portal: avance, días de trabajo y lluvia, novedades y las fotos que elijas, también sin importes. Si alguien olvida la contraseña, la recupera desde “Olvidé mi contraseña”.
       </Aviso>
 
       {pendientes.length > 0 && (
@@ -55,6 +66,7 @@ export default function Usuarios() {
                   <div className="fila-inline">
                     <button className="btn btn-primario btn-chico" onClick={() => patch(u, { rol: 'encargado' }, `${u.nombre || u.email} habilitado como encargado`)}>Habilitar encargado</button>
                     <button className="btn btn-sec btn-chico" onClick={() => patch(u, { rol: 'gremio' }, `${u.nombre || u.email} habilitado como gremio: asignale sus rubros`)}>Gremio</button>
+                    <button className="btn btn-sec btn-chico" onClick={() => patch(u, { rol: 'cliente' }, `${u.nombre || u.email} habilitado como cliente: asignale su obra`)}>Cliente</button>
                     <button className="btn btn-sec btn-chico" onClick={() => window.confirm(`¿Dar acceso de ADMINISTRADOR a ${u.email}? Verá y configurará todas las obras.`) && patch(u, { rol: 'admin' }, 'Habilitado como administrador')}>Administrador</button>
                     <button className="link chico" onClick={() => patch(u, { activo: false }, 'Solicitud rechazada')}>Rechazar</button>
                   </div>
@@ -82,6 +94,13 @@ export default function Usuarios() {
                 )}
               </div>
               {u.rol === 'gremio' && u.activo && <RubrosGremio usuario={u} asignaciones={asig} onCambio={cargarAsig} />}
+              {u.rol === 'cliente' && u.activo && (
+                <div className="obras-asignadas">
+                  <span className="chico texto-suave">Ve las obras:</span>
+                  {obras.map((o) => <label key={o.id} className="check chico"><input type="checkbox" disabled={guardando} checked={asigCli.some((a) => a.usuario_id === u.id && a.obra_id === o.id)} onChange={() => toggleObraCliente(u, o.id)} /> {o.nombre}</label>)}
+                  {!obras.length && <span className="chico texto-suave">todavía no hay obras</span>}
+                </div>
+              )}
               {u.rol === 'encargado' && u.activo && (
                 <div className="obras-asignadas">
                   <span className="chico texto-suave">Obras asignadas:</span>

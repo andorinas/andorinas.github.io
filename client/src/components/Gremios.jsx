@@ -36,7 +36,7 @@ export function FotosInput({ archivos, onChange, max = 8 }) {
 }
 
 /** Grilla de fotos (miniaturas que abren la foto completa). */
-export function GaleriaFotos({ fotos, vacia = 'Todavía no hay fotos.', mostrarOrigen = true }) {
+export function GaleriaFotos({ fotos, vacia = 'Todavía no hay fotos.', mostrarOrigen = true, onToggleCliente }) {
   if (!fotos.length) return <p className="texto-suave">{vacia}</p>;
   return (
     <ul className="galeria">
@@ -50,6 +50,12 @@ export function GaleriaFotos({ fotos, vacia = 'Todavía no hay fotos.', mostrarO
             {mostrarOrigen && f.origen !== 'Galería' && <Chip tipo="info">{f.origen}</Chip>}
             {f.descripcion && <span className="galeria-desc">{f.descripcion}</span>}
             {f.usuario && <span className="texto-suave">{f.usuario}</span>}
+            {onToggleCliente && (
+              <button type="button" className={`foto-cliente ${f.visible_cliente ? 'si' : ''}`} onClick={() => onToggleCliente(f)}
+                aria-pressed={!!f.visible_cliente} title={f.visible_cliente ? 'El cliente ve esta foto. Tocá para ocultarla.' : 'El cliente no ve esta foto. Tocá para mostrársela.'}>
+                {f.visible_cliente ? '👁 La ve el cliente' : '🔒 Sólo la empresa'}
+              </button>
+            )}
           </div>
         </li>
       ))}
@@ -57,51 +63,70 @@ export function GaleriaFotos({ fotos, vacia = 'Todavía no hay fotos.', mostrarO
   );
 }
 
-/** Nuevo reclamo. Empresa: elige gremio destinatario. Gremio: elige uno de sus rubros. */
-export function NuevoReclamo({ obra, rubros, gremios, esGremio, onClose, onListo }) {
+/** Quién le escribe a quién, para mostrar en listas y detalle. */
+export function direccionReclamo(r) {
+  switch (r.direccion) {
+    case 'gremio_a_empresa': return `${r.gremio || 'Gremio'} → empresa`;
+    case 'empresa_a_gremio': return `Empresa → ${r.gremio || 'gremio'}`;
+    case 'cliente_a_empresa': return `${r.cliente || 'Cliente'} → empresa`;
+    case 'empresa_a_cliente': return `Empresa → ${r.cliente || 'cliente'}`;
+    default: return '';
+  }
+}
+
+/** Nuevo reclamo / consulta. Empresa: elige gremio o cliente. Gremio: uno de sus rubros. Cliente: consulta a la empresa. */
+export function NuevoReclamo({ obra, rubros, gremios, clientes = [], esGremio, esCliente, onClose, onListo }) {
   const toast = useToast();
   const clave = useMemo(uuid, []);
-  const [f, setF] = useState({ titulo: '', descripcion: '', rubro_id: rubros.length === 1 ? rubros[0].id : '', gremio_id: '' });
+  const empresa = !esGremio && !esCliente;
+  const [f, setF] = useState({ titulo: '', descripcion: '', rubro_id: rubros.length === 1 ? rubros[0].id : '', para: '' });
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [cargando, run] = useCargando();
-  const rubrosDelGremio = !esGremio && f.gremio_id ? rubros.filter((r) => gremios.find((g) => g.id === f.gremio_id)?.rubros.includes(r.id)) : rubros;
+  const [tipoPara, idPara] = f.para.split(':');
+  const rubrosVisibles = empresa && tipoPara === 'g' ? rubros.filter((r) => gremios.find((g) => g.id === idPara)?.rubros.includes(r.id)) : rubros;
   const enviar = (e) => {
     e.preventDefault();
     run(async () => {
       try {
         setError(null);
         const fotos = await subirFotos(obra.id, archivos);
-        await crearReclamo(obra.id, { ...f, rubro_id: f.rubro_id || null, gremio_id: f.gremio_id || null, fotos, clave_idem: clave });
-        toast('Reclamo enviado'); onListo();
+        await crearReclamo(obra.id, { titulo: f.titulo, descripcion: f.descripcion, rubro_id: f.rubro_id || null,
+          gremio_id: tipoPara === 'g' ? idPara : null, cliente_id: tipoPara === 'c' ? idPara : null, fotos, clave_idem: clave });
+        toast(esCliente ? 'Consulta enviada' : 'Mensaje enviado'); onListo();
       } catch (err) { setError(err.message); }
     });
   };
+  const titulo = esCliente ? 'Nueva consulta a Andorinas' : esGremio ? 'Nuevo reclamo a la empresa' : 'Nuevo mensaje a un gremio o cliente';
   return (
-    <Sheet titulo={esGremio ? 'Nuevo reclamo a la empresa' : 'Nuevo reclamo a un gremio'} obra={obra.nombre} onClose={onClose}>
+    <Sheet titulo={titulo} obra={obra.nombre} onClose={onClose}>
       <form className="form" onSubmit={enviar}>
         {error && <Aviso tipo="error">{error}</Aviso>}
-        {!esGremio && (
-          <Campo label="Gremio" req>
-            <select value={f.gremio_id} onChange={(e) => setF({ ...f, gremio_id: e.target.value, rubro_id: '' })} required>
+        {empresa && (
+          <Campo label="Para" req>
+            <select value={f.para} onChange={(e) => setF({ ...f, para: e.target.value, rubro_id: '' })} required>
               <option value="">Elegí…</option>
-              {gremios.map((g) => <option key={g.id} value={g.id}>{g.nombre}</option>)}
+              {gremios.length > 0 && <optgroup label="Gremios">{gremios.map((g) => <option key={g.id} value={`g:${g.id}`}>{g.nombre}</option>)}</optgroup>}
+              {clientes.length > 0 && <optgroup label="Clientes">{clientes.map((c) => <option key={c.id} value={`c:${c.id}`}>{c.nombre}</option>)}</optgroup>}
             </select>
           </Campo>
         )}
-        {!esGremio && !gremios.length && <Aviso tipo="info">Esta obra no tiene gremios asignados. Asignalos en Usuarios.</Aviso>}
-        <Campo label="Rubro" req={esGremio}>
-          <select value={f.rubro_id} onChange={(e) => setF({ ...f, rubro_id: e.target.value })} required={esGremio}>
-            <option value="">{esGremio ? 'Elegí…' : 'General (sin rubro)'}</option>
-            {rubrosDelGremio.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
-          </select>
-        </Campo>
-        <Campo label="Asunto" req><input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} required maxLength={120} placeholder={esGremio ? 'Ej.: Falta material' : 'Ej.: Pérdida en el baño PB'} /></Campo>
-        <Campo label="Detalle"><textarea value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} rows={3} /></Campo>
-        <Campo label="Fotos"><FotosInput archivos={archivos} onChange={setArchivos} /></Campo>
+        {empresa && !gremios.length && !clientes.length && <Aviso tipo="info">Esta obra no tiene gremios ni clientes asignados. Asignalos en Usuarios.</Aviso>}
+        {!esCliente && (
+          <Campo label="Rubro" req={esGremio}>
+            <select value={f.rubro_id} onChange={(e) => setF({ ...f, rubro_id: e.target.value })} required={esGremio}>
+              <option value="">{esGremio ? 'Elegí…' : 'General (sin rubro)'}</option>
+              {rubrosVisibles.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+            </select>
+          </Campo>
+        )}
+        <Campo label="Asunto" req><input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} required maxLength={120}
+          placeholder={esCliente ? 'Ej.: ¿Cuándo empiezan con la pintura?' : esGremio ? 'Ej.: Falta material' : 'Ej.: Pérdida en el baño PB'} /></Campo>
+        <Campo label={esCliente ? 'Tu consulta' : 'Detalle'}><textarea value={f.descripcion} onChange={(e) => setF({ ...f, descripcion: e.target.value })} rows={3} /></Campo>
+        <Campo label="Fotos" hint={esCliente ? 'Opcional' : undefined}><FotosInput archivos={archivos} onChange={setArchivos} /></Campo>
         <div className="pie-form">
           <button type="button" className="btn btn-fantasma" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primario" disabled={cargando}>{cargando ? 'Enviando…' : 'Enviar reclamo'}</button>
+          <button className="btn btn-primario" disabled={cargando}>{cargando ? 'Enviando…' : esCliente ? 'Enviar consulta' : esGremio ? 'Enviar reclamo' : 'Enviar'}</button>
         </div>
       </form>
     </Sheet>
@@ -135,7 +160,7 @@ export function ReclamoDetalle({ obra, id, onClose, onCambio }) {
     <Sheet titulo={r.titulo} obra={obra.nombre} onClose={onClose} ancho>
       <div className="reclamo-cab">
         <Chip tipo={TONO_RECLAMO[r.estado]}>{ESTADO_RECLAMO[r.estado]}</Chip>
-        <span className="chico texto-suave">{r.direccion === 'gremio_a_empresa' ? `De ${r.gremio || 'gremio'} a la empresa` : `De la empresa a ${r.gremio || 'gremio'}`}{r.rubro ? ` · ${r.rubro}` : ''} · {dmyHora(r.creado_en)}</span>
+        <span className="chico texto-suave">{direccionReclamo(r)}{r.rubro ? ` · ${r.rubro}` : ''} · {dmyHora(r.creado_en)}</span>
       </div>
       {r.descripcion && <p className="reclamo-desc">{r.descripcion}</p>}
       {r.fotos.length > 0 && <GaleriaFotos fotos={r.fotos} mostrarOrigen={false} />}
@@ -161,8 +186,8 @@ export function ReclamoDetalle({ obra, id, onClose, onCambio }) {
 }
 
 /** Lista de reclamos (empresa o gremio). */
-export function ListaReclamos({ reclamos, onAbrir }) {
-  if (!reclamos.length) return <p className="texto-suave">No hay reclamos.</p>;
+export function ListaReclamos({ reclamos, onAbrir, vacia = 'No hay reclamos.' }) {
+  if (!reclamos.length) return <p className="texto-suave">{vacia}</p>;
   return (
     <ul className="lista-movs">
       {reclamos.map((r) => (
@@ -171,7 +196,7 @@ export function ListaReclamos({ reclamos, onAbrir }) {
             <div className="mov-fecha">{dmy(r.actualizado_en)}</div>
             <div className="mov-info">
               <div className="mov-concepto">{r.titulo}</div>
-              <div className="mov-sub">{r.direccion === 'gremio_a_empresa' ? `${r.gremio || 'Gremio'} → empresa` : `Empresa → ${r.gremio || 'gremio'}`}{r.rubro ? ` · ${r.rubro}` : ''}</div>
+              <div className="mov-sub">{direccionReclamo(r)}{r.rubro ? ` · ${r.rubro}` : ''}</div>
             </div>
             <div className="mov-montos"><Chip tipo={TONO_RECLAMO[r.estado]}>{ESTADO_RECLAMO[r.estado]}</Chip></div>
           </button>

@@ -461,3 +461,66 @@ button.kpi { cursor: pointer; } button.kpi:hover { box-shadow: 0 0 0 2px var(--i
 
 .asignar-rubros { display: grid; gap: 8px; width: 100%; margin-top: 6px; }
 @media (min-width: 900px) { .asignar-rubros { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── Portal del cliente, diario de obra y calendario ───────────────────────── */
+.dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; margin-bottom: 16px; }
+.dos-col > .panel { margin-bottom: 0; }
+@media (max-width: 900px) { .dos-col { grid-template-columns: 1fr; } }
+.portal { display: flex; flex-direction: column; gap: 16px; }
+.portal > .panel { margin: 0; }
+.portal-previa { margin: 0; }
+.portal-cab { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: center; }
+.portal-titulo { margin: 0 0 4px; font-size: 1.6rem; }
+.portal-plazo { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; min-width: 220px; }
+.portal-plazo > div:not(.barra) { display: flex; flex-direction: column; }
+.portal-plazo .barra { flex: 1 1 160px; }
+.kpi-mini { font-size: 1.7rem; font-weight: 800; line-height: 1.1; }
+.portal-grilla { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.portal-grilla > .panel { margin: 0; }
+@media (max-width: 900px) { .portal-grilla { grid-template-columns: 1fr; } }
+.anillo-caja { position: relative; width: 170px; height: 170px; margin: 6px auto 10px; }
+.anillo { width: 100%; height: 100%; }
+.anillo-fondo { fill: none; stroke: var(--linea); stroke-width: 12; }
+.anillo-valor { fill: none; stroke: var(--navy); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray .6s; }
+.anillo-txt { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.55rem; font-weight: 800; }
+.grafico-avance { width: 100%; height: auto; }
+.ga-grilla { stroke: var(--linea); stroke-width: 1; }
+.ga-eje { fill: var(--gris); font-size: 11px; }
+.ga-linea { fill: none; stroke: var(--navy); stroke-width: 3; stroke-linejoin: round; }
+.ga-area { fill: var(--navy-claro); opacity: .7; }
+.ga-punto { fill: var(--papel); stroke: var(--navy); stroke-width: 2.5; }
+.portal-rubros { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.portal-rubros li { display: flex; flex-direction: column; gap: 4px; }
+.portal-dias-resumen { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 14px; }
+.portal-dias-resumen > div { background: var(--fondo); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; min-width: 92px; }
+.portal-dias-resumen strong { font-size: 1.3rem; }
+.portal-dias-resumen span { font-size: .8rem; color: var(--gris); }
+.calendario { max-width: 520px; }
+.cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.cal-grilla { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-dia-nombre { text-align: center; font-size: .75rem; color: var(--gris); font-weight: 700; padding-bottom: 2px; }
+.cal-dia { position: relative; overflow: hidden; min-width: 0; aspect-ratio: 1 / 1; border-radius: 8px; background: var(--fondo); border: 1.5px solid transparent; padding: 3px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font: inherit; color: inherit; min-height: 40px; }
+button.cal-dia { cursor: pointer; }
+button.cal-dia:hover { border-color: var(--navy-2); }
+.cal-num { position: absolute; top: 3px; left: 5px; font-size: .72rem; font-weight: 700; color: var(--gris); }
+.cal-clima { font-size: 1.05rem; line-height: 1; }
+.cal-mm { font-size: .6rem; font-weight: 700; color: #1d5fa8; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: clip; }
+@media (max-width: 520px) { .cal-mm::before { content: none; } .cal-mm { font-size: .62rem; } .cal-mm-u { display: none; } }
+.cal-mm::before { content: '💧'; }
+.cal-normal { background: var(--ok-bg); border-color: #a6e4c1; }
+.cal-parcial { background: var(--alerta-bg); border-color: #f5d28a; }
+.cal-no { background: #eceef2; border-color: #c4c9d2; }
+.cal-fuera { opacity: .35; }
+.cal-hoy { box-shadow: inset 0 0 0 2px var(--navy); }
+.cal-sel { border-color: var(--navy); border-width: 2.5px; }
+.cal-leyenda { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; color: var(--gris); }
+.cal-punto { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; border: 1.5px solid transparent; }
+.novedades { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.novedades > li { border-left: 3px solid var(--navy); padding: 2px 0 2px 12px; }
+.novedades h3 { margin: 2px 0 4px; font-size: 1.05rem; }
+.novedades p { margin: 0 0 6px; white-space: pre-line; }
+.novedad-anulada { opacity: .5; border-left-color: var(--gris-2) !important; }
+.foto-cliente { margin-top: 4px; border: 1.5px solid var(--linea); background: var(--papel); border-radius: 999px; padding: 3px 9px; font: inherit;
+  font-size: .75rem; font-weight: 600; color: var(--gris); cursor: pointer; align-self: flex-start; }
+.foto-cliente.si { background: var(--ok-bg); border-color: #a6e4c1; color: var(--ok); }

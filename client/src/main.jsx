@@ -24,6 +24,9 @@ import Configuracion from './pages/Configuracion.jsx';
 import Fotos from './pages/Fotos.jsx';
 import Reclamos from './pages/Reclamos.jsx';
 import GremioApp from './pages/GremioApp.jsx';
+import ClienteApp from './pages/ClienteApp.jsx';
+import Diario from './pages/Diario.jsx';
+import VistaCliente from './pages/VistaCliente.jsx';
 
 function Toasts({ items }) {
   return <div className="toasts" aria-live="polite">{items.map((t) => <div key={t.id} className={`toast toast-${t.tipo}`}>{t.msg}</div>)}</div>;
@@ -153,6 +156,8 @@ function App() {
         <HashRouter>
           {!user ? (
             <Routes><Route path="*" element={<Login />} /></Routes>
+          ) : user.activo && user.rol === 'cliente' ? (
+            <ClienteApp />
           ) : user.activo && user.rol === 'gremio' ? (
             <GremioApp />
           ) : !habilitado ? (
@@ -171,6 +176,8 @@ function App() {
                   <Route path="avance" element={<Avance />} />
                   <Route path="fotos" element={<Fotos />} />
                   <Route path="reclamos" element={<Reclamos />} />
+                  <Route path="diario" element={<Diario />} />
+                  <Route path="cliente" element={<VistaCliente />} />
                   <Route path="configuracion" element={user.rol === 'admin' ? <Configuracion /> : <Navigate to=".." />} />
                 </Route>
                 <Route path="*" element={<NoEncontrado />} />

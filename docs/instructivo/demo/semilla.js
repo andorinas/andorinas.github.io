@@ -195,5 +195,40 @@ export async function sembrar({ pg, clienteDe }) {
   const g4 = await subir(admin, obra, await foto('fachada', 8), 'fachada.jpg');
   await admin.rpc('agregar_fotos', { p_obra: obra, p: { fecha: '2026-11-19', descripcion: 'Vista del frente', fotos: [g4] } });
 
+  // ── Portal del cliente ──
+  await admin.rpc('definir_datos_portal', { p_obra: obra, p: { latitud: -34.8695, longitud: -58.0553, fecha_fin_prevista: '2027-04-30' } });
+  const cliente = await alta('cliente', 'cliente@ejemplo.com', 'Familia Fernández', 'cliente');
+  await admin.rpc('asignar_obras_cliente', { p_usuario: usuarios.cliente.id, p_obras: [obra] });
+  // Fotos de la galería que la empresa eligió mostrar al cliente
+  for (const f of await admin.query("select id from fotos where obra_id = $1 and descripcion in ('Estructura terminada', 'Vista del frente')", [obra])) {
+    await admin.rpc('marcar_foto_cliente', { p_foto: f.id, p_visible: true });
+  }
+  // Parte diario: días hábiles desde el inicio, con algunos días de lluvia
+  const lluviosos = new Set(['2026-06-15', '2026-06-16', '2026-07-08', '2026-08-03', '2026-08-04', '2026-08-21', '2026-09-10', '2026-09-24', '2026-10-06',
+    '2026-10-07', '2026-10-27', '2026-11-03', '2026-11-14', '2026-11-17', '2026-11-20']);
+  const parciales = new Set(['2026-06-17', '2026-08-05', '2026-10-08', '2026-11-18']);
+  for (let d = new Date('2026-06-01T12:00:00Z'); d <= new Date('2026-11-20T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1)) {
+    if ([0, 6].includes(d.getUTCDay())) continue;
+    const fecha = d.toISOString().slice(0, 10);
+    const llueve = lluviosos.has(fecha), parcial = parciales.has(fecha);
+    await enc.rpc('guardar_parte_diario', { p_obra: obra, p: { fecha,
+      clima: llueve ? (fecha === '2026-11-17' ? 'tormenta' : 'lluvia') : parcial ? 'nublado' : (d.getUTCDate() % 4 === 0 ? 'nublado' : 'sol'),
+      trabajo: llueve ? 'no' : parcial ? 'parcial' : 'normal', personal: llueve ? 0 : parcial ? 3 : 5 + (d.getUTCDate() % 4),
+      comentario: llueve ? 'Suspendido por lluvia' : null } });
+  }
+  // Novedades publicadas para el cliente
+  const nv1 = await subir(enc, obra, await foto('losa', 11), 'losa-terminada.jpg');
+  await enc.rpc('crear_novedad', { p_obra: obra, p: { fecha: '2026-09-30', titulo: 'Terminamos la estructura de hormigón',
+    texto: 'Se completaron las losas de planta baja y planta alta. La semana próxima empezamos con la mampostería.', fotos: [nv1] } });
+  const nv2 = await subir(enc, obra, await foto('mamposteria', 12), 'muros-pb.jpg');
+  await enc.rpc('crear_novedad', { p_obra: obra, p: { fecha: '2026-11-13', titulo: 'Avanzamos con los muros de planta baja',
+    texto: 'Ya está levantada la mampostería de planta baja. En paralelo, el electricista y el plomero hacen las cañerías.', fotos: [nv2] } });
+  await enc.rpc('crear_novedad', { p_obra: obra, p: { fecha: '2026-11-18', titulo: 'Días de lluvia',
+    texto: 'Las lluvias del 14 y del 17 de noviembre nos obligaron a suspender dos días de trabajo. Recuperamos parte del tiempo el sábado.' } });
+  await enc.rpc('crear_novedad', { p_obra: obra, p: { fecha: '2026-11-19', titulo: 'Revisar pedido de aberturas', texto: 'Nota interna para el equipo.', visible_cliente: false } });
+  // Consulta del cliente y respuesta de la empresa
+  const cq = await cliente.rpc('crear_reclamo', { p_obra: obra, p: { titulo: '¿Cuándo colocan las aberturas?', descripcion: 'Queremos saber para coordinar la mudanza.' } });
+  await admin.rpc('responder_reclamo', { p_reclamo: cq.id, p: { texto: 'Las aberturas están pedidas; calculamos colocarlas en la segunda quincena de diciembre.', estado: 'en_curso' } });
+
   return usuarios;
 }

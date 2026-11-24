@@ -23,7 +23,7 @@ grant select, insert, delete on storage.objects to authenticated;
 grant usage on schema public to anon, authenticated;
 `;
 
-export async function crearBase() {
+export async function crearBase({ hasta } = {}) {
   const pg = new PGlite({
     parsers: {
       20: (v) => Number(v),                       // bigint -> number (como PostgREST)
@@ -32,7 +32,7 @@ export async function crearBase() {
     },
   });
   await pg.exec(STUB_SUPABASE);
-  for (const f of fs.readdirSync(DIR).filter((x) => x.endsWith('.sql')).sort()) {
+  for (const f of fs.readdirSync(DIR).filter((x) => x.endsWith('.sql') && (!hasta || x <= hasta)).sort()) {
     await pg.exec(fs.readFileSync(path.join(DIR, f), 'utf8'));
   }
   return pg;

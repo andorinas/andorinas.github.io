@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { eliminarObra } from '../datos.js';
+import { eliminarObra, definirDatosPortal } from '../datos.js';
 import { api, money, dmy, dmyHora, tc, hoyISO, ESTADO_OBRA } from '../lib.js';
 import { useObra, useToast } from '../ctx.js';
 import { Campo, FechaInput, ImporteInput, Segmentado, Aviso, Chip, useCargando } from '../components/ui.jsx';
@@ -159,8 +159,49 @@ export default function Configuracion() {
         <ul className="lista-simple">{tipos.map((t) => <li key={t.id}><span>{t.nombre}</span>{t.sistema ? <span className="chico texto-suave">predefinido</span> : null}</li>)}</ul>
         <div className="fila-inline"><input placeholder="Nuevo tipo" value={nuevoTipo} onChange={(e) => setNuevoTipo(e.target.value)} /><button className="btn btn-sec" onClick={agregarTipo}>Agregar</button></div>
       </section>
+      <PortalCliente />
       <ZonaPeligro />
     </div>
+  );
+}
+
+/** Datos que usa el portal del cliente: ubicación (para la lluvia de la zona) y entrega prevista. */
+function PortalCliente() {
+  const { obra, recargarObra, refrescar } = useObra();
+  const toast = useToast();
+  const [coords, setCoords] = useState(obra.latitud != null ? `${obra.latitud}, ${obra.longitud}` : '');
+  const [fin, setFin] = useState(obra.fecha_fin_prevista || '');
+  const [error, setError] = useState(null);
+  const [cargando, run] = useCargando();
+  const guardar = (e) => {
+    e.preventDefault();
+    let latitud = null, longitud = null;
+    if (coords.trim()) {
+      const m = coords.replace(/[()]/g, '').match(/(-?d+(?:[.,]d+)?)s*[,;s]s*(-?d+(?:[.,]d+)?)/);
+      if (!m) return setError('Pegá las coordenadas como “-34.8812, -58.0512” (en Google Maps: clic derecho sobre la obra → copiar los números).');
+      latitud = Number(m[1].replace(',', '.')); longitud = Number(m[2].replace(',', '.'));
+    }
+    run(async () => {
+      try {
+        setError(null);
+        await definirDatosPortal(obra.id, { latitud, longitud, fecha_fin_prevista: fin || null });
+        toast('Datos del portal guardados'); recargarObra(); refrescar();
+      } catch (err) { setError(err.message); }
+    });
+  };
+  return (
+    <section className="panel">
+      <h2>Portal del cliente</h2>
+      <p className="texto-suave chico">Con la ubicación, la app muestra cuánto llovió en la zona de la obra. La entrega prevista se muestra al cliente con los días que faltan.</p>
+      {error && <Aviso tipo="error">{error}</Aviso>}
+      <form className="form" onSubmit={guardar}>
+        <Campo label="Ubicación (coordenadas)" hint="En Google Maps: clic derecho sobre la obra y tocá los números para copiarlos">
+          <input value={coords} onChange={(e) => setCoords(e.target.value)} placeholder="-34.8812, -58.0512" inputMode="decimal" />
+        </Campo>
+        <Campo label="Entrega prevista" hint="Opcional"><FechaInput value={fin} onChange={(v) => setFin(v || '')} /></Campo>
+        <button className="btn btn-primario" disabled={cargando}>Guardar</button>
+      </form>
+    </section>
   );
 }
 

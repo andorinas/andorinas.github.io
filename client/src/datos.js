@@ -338,7 +338,7 @@ export async function listarFotos(obraId, filtro = {}) {
   ]);
   const nr = Object.fromEntries(rubros.map((r) => [r.id, r.nombre]));
   return conUrls(fotos.map((f) => ({ ...f, rubro: nr[f.rubro_id] || null, usuario: dir[f.creado_por] || '',
-    origen: f.parte_id ? 'Parte de avance' : f.reclamo_id ? 'Reclamo' : 'Galería' })));
+    origen: f.parte_id ? 'Parte de avance' : f.reclamo_id ? 'Reclamo' : f.novedad_id ? 'Novedad' : 'Galería' })));
 }
 export const agregarFotos = (obraId, p) => rpc('agregar_fotos', { p_obra: Number(obraId), p });
 
@@ -361,7 +361,7 @@ export async function listarReclamos(obraId) {
     todo(() => tabla('rubros').select('id, nombre').eq('obra_id', obraId)), directorio(),
   ]);
   const nr = Object.fromEntries(rubros.map((r) => [r.id, r.nombre]));
-  return rec.map((r) => ({ ...r, rubro: nr[r.rubro_id] || null, gremio: dir[r.gremio_id] || '', autor: dir[r.creado_por] || '' }));
+  return rec.map((r) => ({ ...r, rubro: nr[r.rubro_id] || null, gremio: dir[r.gremio_id] || '', cliente: dir[r.cliente_id] || '', autor: dir[r.creado_por] || '' }));
 }
 export async function detalleReclamo(obraId, id) {
   const [[r], mensajes, fotos, dir] = await Promise.all([
@@ -440,3 +440,66 @@ async function gremiosInforme(obraId, corte) {
     return filtrarGremios({ partes, reclamos: rec, fotos }, corte);
   } catch { return null; } // el informe financiero sale igual aunque falle esta parte
 }
+
+// ── Portal de clientes ──────────────────────────────────────────────────────
+export const CLIMA = { sol: 'Soleado', nublado: 'Nublado', lluvia: 'Lluvia', tormenta: 'Tormenta' };
+export const ICONO_CLIMA = { sol: '☀️', nublado: '⛅', lluvia: '🌧️', tormenta: '⛈️' };
+export const TRABAJO = { normal: 'Se trabajó', parcial: 'Se trabajó a medias', no: 'No se trabajó' };
+
+/** Lo que ve el cliente de su obra (también "Ver como cliente" para la empresa), con las fotos listas para mostrar. */
+export async function portalObra(obraId) {
+  const p = await rpc('portal_obra', { p_obra: Number(obraId) });
+  const rutas = p.fotos.map((f) => f.ruta);
+  const firmadas = rutas.length ? chk(await supabase.storage.from('adjuntos').createSignedUrls(rutas, 3600)) : [];
+  const url = Object.fromEntries(firmadas.filter((x) => x.signedUrl).map((x) => [x.path, x.signedUrl]));
+  return { ...p, fotos: p.fotos.map((f) => ({ ...f, url: url[f.ruta] || null })) };
+}
+
+/** Obras del cliente (las que el administrador le asignó). */
+export const misObrasCliente = () => todo(() => tabla('obras').select('id, nombre, ubicacion, estado, fecha_inicio').order('nombre'));
+
+/**
+ * Lluvia diaria (mm) de la zona de la obra según NASA POWER (gratuito, datos de satélite y modelos; llega con ~2 días de demora).
+ * Devuelve { 'AAAA-MM-DD': mm }. Se guarda un rato en la sesión para no repetir la consulta.
+ */
+export async function lluviaZona(lat, lon, desde, hasta) {
+  if (lat == null || lon == null) return {};
+  const clave = `lluvia-${lat}-${lon}-${desde}-${hasta}`;
+  try { const c = JSON.parse(sessionStorage.getItem(clave)); if (c && Date.now() - c.t < 6 * 3600e3) return c.d; } catch { /* sin almacenamiento */ }
+  const f = (s) => s.replaceAll('-', '');
+  const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR&community=AG&longitude=${lon}&latitude=${lat}&start=${f(desde)}&end=${f(hasta)}&format=JSON`;
+  const r = await fetch(url);
+  if (!r.ok) throw new ApiError(502, 'No se pudo consultar la lluvia de la zona');
+  const datos = (await r.json())?.properties?.parameter?.PRECTOTCORR || {};
+  const d = {};
+  for (const [k, v] of Object.entries(datos)) if (v >= 0) d[`${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)}`] = Math.round(v * 10) / 10;
+  try { sessionStorage.setItem(clave, JSON.stringify({ t: Date.now(), d })); } catch { /* sin almacenamiento */ }
+  return d;
+}
+
+export async function listarPartesDiarios(obraId) {
+  const [pd, dir] = await Promise.all([todo(() => tabla('partes_diarios').select('*').eq('obra_id', obraId).order('fecha', { ascending: false })), directorio()]);
+  return pd.map((p) => ({ ...p, usuario: dir[p.creado_por] || '' }));
+}
+export const guardarParteDiario = (obraId, p) => rpc('guardar_parte_diario', { p_obra: Number(obraId), p });
+
+export async function listarNovedades(obraId) {
+  const [nov, dir, fotos] = await Promise.all([
+    todo(() => tabla('novedades').select('*').eq('obra_id', obraId).order('fecha', { ascending: false }).order('id', { ascending: false })),
+    directorio(), listarFotos(obraId),
+  ]);
+  return nov.map((n) => ({ ...n, usuario: dir[n.creado_por] || '', fotos: fotos.filter((f) => f.novedad_id === n.id) }));
+}
+export const crearNovedad = (obraId, p) => rpc('crear_novedad', { p_obra: Number(obraId), p });
+export const anularNovedad = (id, motivo) => rpc('anular_novedad', { p_id: id, p_motivo: motivo || null });
+export const marcarFotoCliente = (id, visible) => rpc('marcar_foto_cliente', { p_foto: id, p_visible: visible });
+export const definirDatosPortal = (obraId, p) => rpc('definir_datos_portal', { p_obra: Number(obraId), p });
+
+/** Clientes de una obra (para dirigirles una consulta). */
+export async function clientesDeObra(obraId) {
+  const [oc, dir] = await Promise.all([todo(() => tabla('obra_clientes').select('*').eq('obra_id', obraId)), directorio()]);
+  return oc.map((c) => ({ id: c.usuario_id, nombre: dir[c.usuario_id] || 'Cliente' }));
+}
+/** Administración: obras asignadas a cada cliente. */
+export const asignacionesClientes = () => todo(() => tabla('obra_clientes').select('*'));
+export const asignarObrasCliente = (usuarioId, obras) => rpc('asignar_obras_cliente', { p_usuario: usuarioId, p_obras: obras });

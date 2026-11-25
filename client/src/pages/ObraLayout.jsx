@@ -74,6 +74,7 @@ export default function ObraLayout() {
           <NavLink to="avance">Avance{pend.partes > 0 && <span className="badge">{pend.partes}</span>}</NavLink>
           <NavLink to="diario">Diario</NavLink>
           <NavLink to="fotos">Fotos</NavLink>
+          <NavLink to="documentos">Documentos</NavLink>
           <NavLink to="reclamos">Reclamos{pend.reclamos > 0 && <span className="badge">{pend.reclamos}</span>}</NavLink>
           <NavLink to="cliente">Vista del cliente</NavLink>
           {user.rol === 'admin' && <NavLink to="configuracion">Configuración</NavLink>}

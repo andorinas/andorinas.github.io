@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { api, pct, dmy, dmyHora, parseDecimal } from '../lib.js';
+import { api, pct, dmy, dmyHora, parseDecimal, hoyISO } from '../lib.js';
 import { useObra, useAuth, useToast } from '../ctx.js';
-import { Aviso, Barra, Chip, useCargando } from '../components/ui.jsx';
+import { Aviso, Barra, Chip, FechaInput, useCargando } from '../components/ui.jsx';
 import { useInforme } from '../components/Vista.jsx';
-import { verAdjunto, listarPartes, revisarParte } from '../datos.js';
+import { verAdjunto, listarPartes, revisarParte, definirPlan } from '../datos.js';
+import { Cronograma } from '../components/Portal.jsx';
+import { rangoPlan } from '../../../shared/plan.js';
 import { TarjetaParte } from '../components/Gremios.jsx';
 
 function EditorPesos({ rubros, onGuardado }) {
@@ -41,6 +43,45 @@ function EditorPesos({ rubros, onGuardado }) {
         ))}
       </ul>
       <button className="btn btn-primario" disabled={cargando || falta < 0} onClick={guardar}>Guardar pesos</button>
+    </section>
+  );
+}
+
+/** Plan de obra: inicio y fin previstos de cada rubro (el cliente ve el cronograma y la curva planificada). */
+function EditorPlan({ rubros, onGuardado }) {
+  const { obra } = useObra();
+  const toast = useToast();
+  const [val, setVal] = useState(() => Object.fromEntries(rubros.map((r) => [r.id, { inicio: r.inicio_plan || '', fin: r.fin_plan || '' }])));
+  const [error, setError] = useState(null);
+  const [cargando, run] = useCargando();
+  const set = (id, k) => (v) => setVal((x) => ({ ...x, [id]: { ...x[id], [k]: v || '' } }));
+  const vista = rubros.map((r) => ({ ...r, inicio_plan: val[r.id].inicio || null, fin_plan: val[r.id].inicio && val[r.id].fin ? val[r.id].fin : null,
+    avance: r.ultimoAvance?.porcentaje ?? null }));
+  const sinFechas = rubros.filter((r) => !val[r.id].inicio || !val[r.id].fin).length;
+  const guardar = () => run(async () => {
+    try {
+      setError(null);
+      await definirPlan(obra.id, rubros.map((r) => ({ id: r.id, inicio: val[r.id].inicio, fin: val[r.id].fin })));
+      toast('Plan de obra guardado'); onGuardado();
+    } catch (e) { setError(e.message); }
+  });
+  return (
+    <section className="panel">
+      <h2>Plan de obra</h2>
+      <p className="texto-suave chico">Fechas previstas de cada rubro. Con esto el cliente ve el cronograma y la curva “según el plan” al lado del avance real.
+        {sinFechas > 0 && ` Faltan fechas en ${sinFechas} rubro${sinFechas > 1 ? 's' : ''}.`}</p>
+      {error && <Aviso tipo="error">{error}</Aviso>}
+      <ul className="lista-plan">
+        {rubros.map((r) => (
+          <li key={r.id}>
+            <strong>{r.nombre}</strong>
+            <label className="chico">Inicio <FechaInput value={val[r.id].inicio} onChange={set(r.id, 'inicio')} /></label>
+            <label className="chico">Fin <FechaInput value={val[r.id].fin} onChange={set(r.id, 'fin')} /></label>
+          </li>
+        ))}
+      </ul>
+      <button className="btn btn-primario" disabled={cargando} onClick={guardar}>Guardar plan</button>
+      {rangoPlan(vista) && <div style={{ marginTop: 16 }}><Cronograma rubros={vista} hoy={hoyISO()} /></div>}
     </section>
   );
 }
@@ -91,6 +132,7 @@ export default function Avance() {
         </ul>
       </section>
       {user.rol === 'admin' && <EditorPesos key={rubros.map((r) => `${r.id}:${r.peso}`).join()} rubros={rubros} onGuardado={recargarObra} />}
+      {user.rol === 'admin' && <EditorPlan key={rubros.map((r) => `${r.id}:${r.inicio_plan}:${r.fin_plan}`).join()} rubros={rubros} onGuardado={recargarObra} />}
       <section className="panel">
         <h2>Historial</h2>
         {hist.length === 0 && <p className="texto-suave">Todavía no se cargaron avances.</p>}

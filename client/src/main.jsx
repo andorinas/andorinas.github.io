@@ -27,6 +27,7 @@ import GremioApp from './pages/GremioApp.jsx';
 import ClienteApp from './pages/ClienteApp.jsx';
 import Diario from './pages/Diario.jsx';
 import VistaCliente from './pages/VistaCliente.jsx';
+import Documentos from './pages/Documentos.jsx';
 
 function Toasts({ items }) {
   return <div className="toasts" aria-live="polite">{items.map((t) => <div key={t.id} className={`toast toast-${t.tipo}`}>{t.msg}</div>)}</div>;
@@ -177,6 +178,7 @@ function App() {
                   <Route path="fotos" element={<Fotos />} />
                   <Route path="reclamos" element={<Reclamos />} />
                   <Route path="diario" element={<Diario />} />
+                  <Route path="documentos" element={<Documentos />} />
                   <Route path="cliente" element={<VistaCliente />} />
                   <Route path="configuracion" element={user.rol === 'admin' ? <Configuracion /> : <Navigate to=".." />} />
                 </Route>

@@ -500,6 +500,45 @@ export async function clientesDeObra(obraId) {
   const [oc, dir] = await Promise.all([todo(() => tabla('obra_clientes').select('*').eq('obra_id', obraId)), directorio()]);
   return oc.map((c) => ({ id: c.usuario_id, nombre: dir[c.usuario_id] || 'Cliente' }));
 }
+// ── Plan de obra y documentos (portal, etapa 2) ────────────────────────────
+/** rubros: [{ id, inicio, fin }] (fechas vacías = sin planificar). Administrador. */
+export const definirPlan = (obraId, rubros) => rpc('definir_plan', { p_obra: Number(obraId), p: { rubros } });
+
+export const CATEGORIA_DOC = { plano: 'Plano', contrato: 'Contrato', permiso: 'Permiso municipal', memoria: 'Memoria y especificaciones',
+  certificado: 'Certificado', garantia: 'Garantía o manual', otro: 'Otro' };
+export const ICONO_DOC = { plano: '📐', contrato: '📝', permiso: '🏛️', memoria: '📘', certificado: '✅', garantia: '🧾', otro: '📄' };
+
+export async function listarDocumentos(obraId) {
+  const [docs, dir] = await Promise.all([
+    todo(() => tabla('documentos').select('*').eq('obra_id', obraId).eq('anulado', false).order('creado_en', { ascending: false })),
+    directorio(),
+  ]);
+  const ids = docs.map((d) => d.adjunto_id);
+  const adj = ids.length ? chk(await tabla('adjuntos').select('id, ruta, nombre, mime, tamano').in('id', ids)) : [];
+  const porId = Object.fromEntries(adj.map((a) => [a.id, a]));
+  const orden = Object.keys(CATEGORIA_DOC);
+  docs.sort((a, b) => orden.indexOf(a.categoria) - orden.indexOf(b.categoria) || b.creado_en.localeCompare(a.creado_en) || a.id - b.id);
+  return docs.map((d) => ({ ...d, ruta: porId[d.adjunto_id]?.ruta, nombre: porId[d.adjunto_id]?.nombre,
+    mime: porId[d.adjunto_id]?.mime, tamano: porId[d.adjunto_id]?.tamano, usuario: dir[d.creado_por] || '' }));
+}
+export async function crearDocumento(obraId, { archivo, titulo, categoria, visible_cliente }) {
+  if (!archivo) throw new ApiError(400, 'Elegí el archivo del documento');
+  const adj = await subirAdjunto(obraId, archivo);
+  return rpc('crear_documento', { p_obra: Number(obraId), p: { adjunto_id: adj.id, titulo, categoria, visible_cliente } });
+}
+export const marcarDocumentoCliente = (id, visible) => rpc('marcar_documento_cliente', { p_id: id, p_visible: visible });
+export const anularDocumento = (id) => rpc('anular_documento', { p_id: id });
+
+/** Abre un archivo del bucket con un enlace temporal (60 s), sólo si hay permiso para verlo. */
+export async function abrirArchivo(ruta) {
+  const w = window.open('', '_blank');
+  try {
+    const { signedUrl } = chk(await supabase.storage.from('adjuntos').createSignedUrl(ruta, 60));
+    if (!signedUrl) throw new ApiError(403, 'No tenés acceso a este archivo');
+    if (w) w.location.href = signedUrl; else window.location.href = signedUrl;
+  } catch (e) { w?.close(); throw e; }
+}
+
 /** Administración: obras asignadas a cada cliente. */
 export const asignacionesClientes = () => todo(() => tabla('obra_clientes').select('*'));
 export const asignarObrasCliente = (usuarioId, obras) => rpc('asignar_obras_cliente', { p_usuario: usuarioId, p_obras: obras });

@@ -203,6 +203,27 @@ await paso('10-admin', async () => {
 });
 
 // ── Portal de clientes ────────────────────────────────────────────────────
+await paso('Q-etapa2', async () => {
+  await abrir('cliente', '#/', 1280, 900); await espera(4000);
+  await foto('Q1-cliente-avance-plan', { selector: '.portal-avance' });
+  await foto('Q2-cliente-cronograma', { selector: 'texto:Cronograma|Plazo previsto' });
+  await foto('Q3-cliente-documentos', { selector: 'texto:Planos, contrato, permisos|Memoria descriptiva' });
+  await js(`clic('Informe mensual')`); await espera(2500);
+  await js(`(document.querySelectorAll('.informe-hoja img').forEach((i) => { i.loading = 'eager'; }), true)`); await espera(1500);
+  await foto('Q4-informe-pantalla');
+  await abrir('cliente', '#/', 860, 1200); await espera(4000); await js(`clic('Informe mensual')`); await espera(2500);
+  await cdp('Emulation.setEmulatedMedia', { media: 'print' }); await espera(800);
+  await foto('Q5-informe-impreso', { selector: '.informe-hoja', margen: 0 });
+  await cdp('Emulation.setEmulatedMedia', { media: '' });
+  await abrir('cliente', '#/', 390, 844, true); await espera(4000);
+  await js(`(document.querySelector('.gantt').scrollIntoView({ block: 'center' }), true)`); await espera(800); await foto('Q6-cliente-celular-cronograma');
+  await abrir('admin', '#/obras/1/avance', 1280, 900); await espera(3000);
+  await foto('Q7-empresa-plan', { selector: 'texto:Plan de obra|Guardar plan|Plazo previsto' });
+  await ir('#/obras/1/documentos', 'Documentos de la obra'); await espera(1500);
+  await foto('Q8-empresa-documentos', { selector: 'texto:Documentos de la obra|Cómputo interno' });
+  await js(`clic('Subir documento')`); await espera(500); await foto('Q9-empresa-subir-documento', { selector: 'texto:Documentos de la obra|¿Lo ve el cliente?|Subir' });
+});
+
 await paso('P-portal', async () => {
   await abrir('cliente', '#/', 1280, 900); await espera(4000);
   await js(`(document.querySelectorAll('img').forEach((i) => { i.loading = 'eager'; }), true)`); await espera(3000); await foto('P1-cliente-portal', { completa: true });

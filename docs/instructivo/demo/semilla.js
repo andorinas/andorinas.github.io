@@ -197,6 +197,27 @@ export async function sembrar({ pg, clienteDe }) {
 
   // ── Portal del cliente ──
   await admin.rpc('definir_datos_portal', { p_obra: obra, p: { latitud: -34.8695, longitud: -58.0553, fecha_fin_prevista: '2027-04-30' } });
+  // Plan de obra (fechas previstas por rubro)
+  const PLAN = { 'Movimiento de suelo': ['2026-06-01', '2026-06-20'], Estructura: ['2026-06-15', '2026-09-30'], Albañilería: ['2026-09-01', '2026-12-31'],
+    'Instalación sanitaria': ['2026-09-15', '2027-01-15'], Electricidad: ['2026-09-15', '2027-02-15'], Carpintería: ['2027-01-04', '2027-02-28'],
+    Pintura: ['2027-02-15', '2027-03-31'], Terminaciones: ['2027-03-01', '2027-04-30'] };
+  await admin.rpc('definir_plan', { p_obra: obra, p: { rubros: Object.entries(PLAN).map(([n, [inicio, fin]]) => ({ id: r[n], inicio, fin })) } });
+  // Documentos compartidos (uno queda sólo para la empresa)
+  const pdf = (titulo) => new Blob([`%PDF-1.4\n% Documento de ejemplo: ${titulo}\n%%EOF\n`], { type: 'application/pdf' });
+  const subirDoc = async (blob, nombre, mime) => {
+    const ruta = `obra-${obra}/doc-${++n}.${mime === 'application/pdf' ? 'pdf' : 'jpg'}`;
+    await admin.subir(ruta, blob);
+    return admin.rpc('registrar_adjunto', { p_obra: obra, p_ruta: ruta, p_nombre: nombre, p_mime: mime, p_tamano: blob.size * 900 });
+  };
+  const DOCS = [
+    ['Plano de planta baja', 'plano', 'plano-planta-baja.pdf'], ['Plano de planta alta', 'plano', 'plano-planta-alta.pdf'],
+    ['Contrato de obra', 'contrato', 'contrato-obra.pdf'], ['Permiso de obra — Municipalidad de La Plata', 'permiso', 'permiso-municipal.pdf'],
+    ['Memoria descriptiva y especificaciones', 'memoria', 'memoria-descriptiva.pdf'], ['Cómputo interno de materiales', 'otro', 'computo-interno.pdf', false],
+  ];
+  for (const [titulo, categoria, nombre, visible = true] of DOCS) {
+    const adj = await subirDoc(pdf(titulo), nombre, 'application/pdf');
+    await admin.rpc('crear_documento', { p_obra: obra, p: { adjunto_id: adj, titulo, categoria, visible_cliente: visible } });
+  }
   const cliente = await alta('cliente', 'cliente@ejemplo.com', 'Familia Fernández', 'cliente');
   await admin.rpc('asignar_obras_cliente', { p_usuario: usuarios.cliente.id, p_obras: [obra] });
   // Fotos de la galería que la empresa eligió mostrar al cliente

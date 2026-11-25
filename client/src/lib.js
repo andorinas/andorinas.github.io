@@ -34,7 +34,7 @@ export function parseImporte(txt) {
   if (!/^\d+(\.\d{0,2})?$/.test(s)) return null;
   return Math.round(Number(s) * 100);
 }
-export { parseDecimal } from '../../shared/numeros.js';
+export { parseDecimal, leerCoordenadas } from '../../shared/numeros.js';
 /** "DD/MM/AAAA" -> "AAAA-MM-DD" (o null si no es válida). */
 export function parseDMY(txt) {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(txt).trim());

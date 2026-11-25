@@ -2,12 +2,15 @@
 // Lo usan el cliente (ClienteApp) y la empresa ("Vista del cliente") con los mismos datos de portal_obra().
 import { useEffect, useMemo, useState } from 'react';
 import { dmy, pct, hoyISO } from '../lib.js';
-import { lluviaZona, CLIMA, ICONO_CLIMA, TRABAJO } from '../datos.js';
+import { lluviaZona, abrirArchivo, CLIMA, ICONO_CLIMA, TRABAJO, CATEGORIA_DOC, ICONO_DOC } from '../datos.js';
+import { useToast } from '../ctx.js';
 import { Chip, Barra } from './ui.jsx';
 import { GaleriaFotos } from './Gremios.jsx';
 import { ESTADO_OBRA } from '../lib.js';
+import { avancePlanificado, curvaPlan, rangoPlan, msDeIso, isoDeMs, DIA } from '../../../shared/plan.js';
+import InformeMensual from './InformeMensual.jsx';
 
-const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const DIAS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const diasEntre = (a, b) => Math.round((new Date(`${b}T12:00:00`) - new Date(`${a}T12:00:00`)) / 864e5);
@@ -26,7 +29,7 @@ export function useLluvia(obra, desde, hasta) {
 }
 
 /** Calendario mensual: parte diario (si se trabajó) + lluvia de la zona. */
-export function Calendario({ dias, lluvia = {}, mes, onMes, desde, onDia, seleccionado }) {
+export function Calendario({ dias, lluvia = {}, mes, onMes, desde, onDia, seleccionado, fijo }) {
   const [a, m] = mes.split('-').map(Number);
   const primero = new Date(a, m - 1, 1);
   const offset = (primero.getDay() + 6) % 7;
@@ -41,11 +44,11 @@ export function Calendario({ dias, lluvia = {}, mes, onMes, desde, onDia, selecc
   const puedeAdelante = `${mes}-01` < hoy.slice(0, 7) + '-01';
   return (
     <div className="calendario">
-      <div className="cal-nav">
+      {!fijo && <div className="cal-nav">
         <button type="button" className="btn btn-fantasma btn-chico" onClick={() => mover(-1)} disabled={!puedeAtras} aria-label="Mes anterior">‹</button>
         <strong>{MESES[m - 1]} {a}</strong>
         <button type="button" className="btn btn-fantasma btn-chico" onClick={() => mover(1)} disabled={!puedeAdelante} aria-label="Mes siguiente">›</button>
-      </div>
+      </div>}
       <div className="cal-grilla">
         {DIAS.map((d, i) => <div key={i} className="cal-dia-nombre">{d}</div>)}
         {celdas.map((f, i) => {
@@ -89,28 +92,132 @@ export function resumenDias(dias, lluvia, desde, hasta) {
   };
 }
 
-/** Evolución del avance general (SVG simple, se adapta al ancho). */
-function GraficoAvance({ serie }) {
-  const puntos = serie.filter((s) => s.avance != null);
-  if (puntos.length < 2) return <p className="texto-suave chico">La evolución aparece cuando haya avances en más de un mes.</p>;
-  const W = 600, H = 200, P = 40;
-  const t0 = new Date(puntos[0].fecha).getTime(), t1 = new Date(puntos.at(-1).fecha).getTime() || t0 + 1;
-  const x = (f) => P + ((new Date(f).getTime() - t0) / Math.max(1, t1 - t0)) * (W - 2 * P);
+/** Evolución del avance general: real (línea llena) y planificado (punteada), con la marca de hoy. */
+export function GraficoAvance({ serie, rubros = [], inicio, hoy }) {
+  const real = serie.filter((s) => s.avance != null).map((s) => ({ fecha: s.fecha, avance: Number(s.avance) }));
+  if (real.length && inicio && real[0].fecha > inicio) real.unshift({ fecha: inicio, avance: 0 });
+  const plan = curvaPlan(rubros);
+  if (real.length < 2 && !plan.length) return <p className="texto-suave chico">La evolución aparece cuando haya avances en más de un mes.</p>;
+  const W = 600, H = 210, P = 40;
+  const ts = [...real, ...plan].map((p) => msDeIso(p.fecha));
+  const t0 = Math.min(...ts), t1 = Math.max(...ts, t0 + 1);
+  const x = (f) => P + ((msDeIso(f) - t0) / (t1 - t0)) * (W - 2 * P);
   const y = (v) => H - P - (v / 100) * (H - 2 * P);
-  const linea = puntos.map((p, i) => `${i ? 'L' : 'M'}${x(p.fecha).toFixed(1)},${y(Number(p.avance)).toFixed(1)}`).join(' ');
+  const camino = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.fecha).toFixed(1)},${y(p.avance).toFixed(1)}`).join(' ');
+  const hoyX = hoy && msDeIso(hoy) >= t0 && msDeIso(hoy) <= t1 ? x(hoy) : null;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="grafico-avance" role="img" aria-label="Evolución del avance general de la obra">
-      {[0, 25, 50, 75, 100].map((v) => (
-        <g key={v}><line x1={P} x2={W - P} y1={y(v)} y2={y(v)} className="ga-grilla" /><text x={P - 6} y={y(v) + 4} className="ga-eje" textAnchor="end">{v}%</text></g>
-      ))}
-      <path d={`${linea} L${x(puntos.at(-1).fecha)},${y(0)} L${x(puntos[0].fecha)},${y(0)} Z`} className="ga-area" />
-      <path d={linea} className="ga-linea" />
-      {puntos.map((p) => <circle key={p.fecha} cx={x(p.fecha)} cy={y(Number(p.avance))} r="4" className="ga-punto"><title>{dmy(p.fecha)}: {pct(Number(p.avance))}</title></circle>)}
-      <text x={P} y={H - 8} className="ga-eje">{dmy(puntos[0].fecha)}</text>
-      <text x={W - P} y={H - 8} className="ga-eje" textAnchor="end">{dmy(puntos.at(-1).fecha)}</text>
-    </svg>
+    <>
+      <svg viewBox={`0 0 ${W} ${H}`} className="grafico-avance" role="img" aria-label="Evolución del avance de la obra, real y planificado">
+        {[0, 25, 50, 75, 100].map((v) => (
+          <g key={v}><line x1={P} x2={W - P} y1={y(v)} y2={y(v)} className="ga-grilla" /><text x={P - 6} y={y(v) + 4} className="ga-eje" textAnchor="end">{v}%</text></g>
+        ))}
+        {hoyX != null && <g><line x1={hoyX} x2={hoyX} y1={P - 14} y2={H - P} className="ga-hoy" /><text x={hoyX} y={P - 18} className="ga-eje" textAnchor="middle">Hoy</text></g>}
+        {plan.length > 0 && <path d={camino(plan)} className="ga-plan" />}
+        {real.length > 1 && <>
+          <path d={`${camino(real)} L${x(real.at(-1).fecha)},${y(0)} L${x(real[0].fecha)},${y(0)} Z`} className="ga-area" />
+          <path d={camino(real)} className="ga-linea" />
+          {real.map((p) => <circle key={p.fecha} cx={x(p.fecha)} cy={y(p.avance)} r="4" className="ga-punto"><title>{dmy(p.fecha)}: {pct(p.avance)}</title></circle>)}
+        </>}
+        <text x={P} y={H - 12} className="ga-eje">{dmy(isoDeMs(t0))}</text>
+        <text x={W - P} y={H - 12} className="ga-eje" textAnchor="end">{dmy(isoDeMs(t1))}</text>
+      </svg>
+      <div className="ga-leyenda chico">
+        <span><i className="ga-ley-real" /> Avance real</span>
+        {plan.length > 0 && <span><i className="ga-ley-plan" /> Según el plan</span>}
+      </div>
+    </>
   );
 }
+
+/** % de una etapa a una fecha, según el historial de avances. */
+export function avanceRubroAl(historial, rubroId, fecha) {
+  let v = null;
+  for (const h of historial || []) if (h.rubro_id === rubroId && h.fecha <= fecha) v = Number(h.porcentaje);
+  return v;
+}
+
+/** Comparación del avance real con el plan a una fecha. */
+export function desvioPlan(rubros, real, fecha) {
+  const esperado = avancePlanificado(rubros, fecha);
+  if (esperado == null || real == null) return null;
+  const dif = Math.round((real - esperado) * 10) / 10;
+  return { esperado, dif, estado: dif >= -2 ? (dif > 2 ? 'adelantada' : 'en-termino') : 'atrasada' };
+}
+
+/** Cronograma (Gantt): barra prevista de cada etapa, rellena según su avance real, con la línea de hoy. */
+export function Cronograma({ rubros, hoy }) {
+  const rango = rangoPlan(rubros);
+  if (!rango) return <p className="texto-suave chico">El cronograma aparece cuando la empresa cargue las fechas previstas de cada etapa.</p>;
+  const t0 = msDeIso(rango.inicio), t1 = msDeIso(rango.fin) + DIA;
+  const pos = (ms) => Math.max(0, Math.min(100, ((ms - t0) / (t1 - t0)) * 100));
+  const meses = [];
+  for (let d = new Date(Date.UTC(new Date(t0).getUTCFullYear(), new Date(t0).getUTCMonth(), 1)); d.getTime() < t1; d.setUTCMonth(d.getUTCMonth() + 1)) {
+    if (d.getTime() >= t0) meses.push({ ms: d.getTime(), txt: `${MESES[d.getUTCMonth()].slice(0, 3)} ${String(d.getUTCFullYear()).slice(2)}` });
+  }
+  const hoyMs = msDeIso(hoy);
+  return (
+    <div className="gantt">
+      <div className="gantt-fila gantt-cab">
+        <span />
+        <div className="gantt-pista">{meses.map((m, i) => (
+          <span key={m.ms} className={`gantt-mes ${i % Math.ceil(meses.length / 4) ? 'gantt-mes-sec' : ''}`} style={{ left: `${pos(m.ms)}%` }}>{m.txt}</span>
+        ))}</div>
+      </div>
+      {rubros.map((r) => {
+        if (!r.inicio_plan) return (
+          <div key={r.id} className="gantt-fila"><span className="gantt-nombre">{r.nombre}</span><div className="gantt-pista"><span className="chico texto-suave gantt-sin">Sin fechas previstas</span></div></div>
+        );
+        const ini = msDeIso(r.inicio_plan), fin = msDeIso(r.fin_plan) + DIA;
+        const av = Number(r.avance || 0);
+        const esperado = hoyMs < ini ? 0 : hoyMs >= fin ? 100 : ((hoyMs - ini) / (fin - ini)) * 100;
+        const tono = av >= 100 ? 'ok' : av + 10 < esperado ? 'atraso' : '';
+        const titulo = `${r.nombre}: previsto del ${dmy(r.inicio_plan)} al ${dmy(r.fin_plan)} · avance ${pct(av)}`;
+        return (
+          <div key={r.id} className="gantt-fila" title={titulo}>
+            <span className="gantt-nombre">{r.nombre}</span>
+            <div className="gantt-pista">
+              <div className={`gantt-barra ${tono}`} style={{ left: `${pos(ini)}%`, width: `${Math.max(1.5, pos(fin) - pos(ini))}%` }} aria-label={titulo}>
+                <div className="gantt-relleno" style={{ width: `${Math.min(100, av)}%` }} />
+                {av > 0 && pos(fin) - pos(ini) >= 9 && <span className="gantt-pct">{pct(av)}</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {hoyMs >= t0 && hoyMs <= t1 && (
+        <div className="gantt-fila gantt-hoy-fila" aria-hidden="true"><span /><div className="gantt-pista"><i className="gantt-hoy" style={{ left: `${pos(hoyMs)}%` }} /></div></div>
+      )}
+      <div className="cal-leyenda chico">
+        <span><i className="gantt-ley gantt-ley-plan" /> Plazo previsto</span>
+        <span><i className="gantt-ley gantt-ley-real" /> Avance real</span>
+        <span><i className="gantt-ley gantt-ley-atraso" /> Con atraso</span>
+        <span><i className="gantt-ley gantt-ley-hoy" /> Hoy</span>
+      </div>
+    </div>
+  );
+}
+
+/** Documentos que la empresa comparte con el cliente. */
+export function ListaDocumentos({ documentos, acciones, vacia = 'Todavía no hay documentos compartidos.' }) {
+  const toast = useToast();
+  if (!documentos.length) return <p className="texto-suave">{vacia}</p>;
+  return (
+    <ul className="documentos">
+      {documentos.map((d) => (
+        <li key={d.id}>
+          <button type="button" className="doc-abrir" onClick={() => abrirArchivo(d.ruta).catch((e) => toast(e.message, 'error'))}>
+            <span className="doc-icono" aria-hidden="true">{ICONO_DOC[d.categoria]}</span>
+            <span className="doc-txt"><strong>{d.titulo}</strong>
+              <span className="chico texto-suave">{CATEGORIA_DOC[d.categoria]} · {dmy(d.fecha || d.creado_en?.slice(0, 10))}{d.tamano ? ` · ${tamanoLegible(d.tamano)}` : ''}</span></span>
+            <span className="doc-ver chico">Abrir</span>
+          </button>
+          {acciones && acciones(d)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+const tamanoLegible = (b) => (b > 1048576 ? `${(b / 1048576).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 function Anillo({ valor }) {
   const r = 52, c = 2 * Math.PI * r, v = Math.max(0, Math.min(100, valor || 0));
@@ -132,13 +239,19 @@ export default function PortalObra({ p, vistaPrevia }) {
   const totalPlazo = o.fecha_fin_prevista ? diasEntre(o.fecha_inicio, o.fecha_fin_prevista) : null;
   const restan = o.fecha_fin_prevista ? diasEntre(hoy, o.fecha_fin_prevista) : null;
   const general = p.avance_general == null ? null : Number(p.avance_general);
+  const desvio = desvioPlan(p.rubros, general, hoy);
   const fotosNov = (id) => p.fotos.filter((f) => f.novedad_id === id);
+  const [informe, setInforme] = useState(false);
+  const documentos = p.documentos || [];
   return (
     <div className="portal">
       {vistaPrevia && <div className="aviso aviso-info portal-previa">Así ve esta obra el cliente. No muestra importes ni datos internos.</div>}
       <section className="panel portal-cab">
         <div>
-          <h1 className="portal-titulo">{o.nombre}</h1>
+          <div className="fila-entre envolver portal-cab-titulo">
+            <h1 className="portal-titulo">{o.nombre}</h1>
+            <button type="button" className="btn btn-sec btn-chico" onClick={() => setInforme(true)}>📄 Informe mensual</button>
+          </div>
           {o.ubicacion && <div className="texto-suave">{o.ubicacion}</div>}
           <div className="fila-inline chico" style={{ marginTop: 8 }}>
             <Chip tipo={o.estado === 'en_curso' ? 'ok' : 'neutro'}>{ESTADO_OBRA[o.estado]}</Chip>
@@ -161,8 +274,16 @@ export default function PortalObra({ p, vistaPrevia }) {
             <div className="anillo-txt">{general == null ? '—' : pct(general)}</div>
           </div>
           {general == null && <p className="chico texto-suave">El avance general aparece cuando la empresa termine de definir el peso de cada etapa.</p>}
+          {desvio && (
+            <div className={`portal-desvio desvio-${desvio.estado}`}>
+              Según el plan debería estar en <strong>{pct(desvio.esperado)}</strong>.{' '}
+              {desvio.estado === 'en-termino' ? 'La obra va en término.'
+                : desvio.estado === 'adelantada' ? <>Va <strong>{String(desvio.dif).replace('.', ',')} puntos adelantada</strong>.</>
+                  : <>Va <strong>{String(-desvio.dif).replace('.', ',')} puntos atrasada</strong>{res.perdidosLluvia ? ` (se perdieron ${res.perdidosLluvia} días por lluvia)` : ''}.</>}
+            </div>
+          )}
           <h3 className="chico">Evolución</h3>
-          <GraficoAvance serie={p.serie} />
+          <GraficoAvance serie={p.serie} rubros={p.rubros} inicio={o.fecha_inicio} hoy={hoy} />
         </section>
 
         <section className="panel">
@@ -178,6 +299,14 @@ export default function PortalObra({ p, vistaPrevia }) {
           </ul>
         </section>
       </div>
+
+      {rangoPlan(p.rubros) && (
+        <section className="panel">
+          <h2>Cronograma</h2>
+          <p className="chico texto-suave">Cuándo está previsto hacer cada etapa y cuánto se avanzó en cada una.</p>
+          <Cronograma rubros={p.rubros} hoy={hoy} />
+        </section>
+      )}
 
       <section className="panel">
         <h2>Clima y días de trabajo</h2>
@@ -216,6 +345,13 @@ export default function PortalObra({ p, vistaPrevia }) {
         <h2>Fotos de la obra</h2>
         <GaleriaFotos fotos={p.fotos} mostrarOrigen={false} vacia="Todavía no hay fotos publicadas." />
       </section>
+
+      <section className="panel">
+        <h2>Documentos</h2>
+        <p className="chico texto-suave">Planos, contrato, permisos y otros papeles de tu obra.</p>
+        <ListaDocumentos documentos={documentos} />
+      </section>
+      {informe && <InformeMensual p={p} lluvia={lluvia} onClose={() => setInforme(false)} />}
     </div>
   );
 }

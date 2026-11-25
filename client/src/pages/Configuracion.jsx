@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { eliminarObra, definirDatosPortal } from '../datos.js';
-import { api, money, dmy, dmyHora, tc, hoyISO, ESTADO_OBRA } from '../lib.js';
+import { api, money, dmy, dmyHora, tc, hoyISO, ESTADO_OBRA, leerCoordenadas } from '../lib.js';
 import { useObra, useToast } from '../ctx.js';
 import { Campo, FechaInput, ImporteInput, Segmentado, Aviso, Chip, useCargando } from '../components/ui.jsx';
 
@@ -177,9 +177,9 @@ function PortalCliente() {
     e.preventDefault();
     let latitud = null, longitud = null;
     if (coords.trim()) {
-      const m = coords.replace(/[()]/g, '').match(/(-?d+(?:[.,]d+)?)s*[,;s]s*(-?d+(?:[.,]d+)?)/);
-      if (!m) return setError('Pegá las coordenadas como “-34.8812, -58.0512” (en Google Maps: clic derecho sobre la obra → copiar los números).');
-      latitud = Number(m[1].replace(',', '.')); longitud = Number(m[2].replace(',', '.'));
+      const c = leerCoordenadas(coords);
+      if (!c) return setError('Pegá las coordenadas como “-34.8812, -58.0512” (en Google Maps: clic derecho sobre la obra → copiar los números).');
+      ({ latitud, longitud } = c);
     }
     run(async () => {
       try {

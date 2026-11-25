@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { crearBase, crearUsuario, como } from './db.js';
 
-test('actualizar.sql aplica el portal de clientes sobre una base existente, dos veces seguidas', async () => {
-  const pg = await crearBase({ hasta: '007_gremios.sql' });
+test('actualizar.sql aplica la etapa 2 sobre una base como la de producción (hasta 008), dos veces seguidas', async () => {
+  const pg = await crearBase({ hasta: '008_clientes.sql' });
   await pg.query("insert into configuracion values ('admin_email', 'admin@test')");
   const admin = como(pg, await crearUsuario(pg, 'admin@test'));
   const gremio = como(pg, await crearUsuario(pg, 'gremio@test', 'gremio'));

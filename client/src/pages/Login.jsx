@@ -6,11 +6,11 @@ import { Marca, Aviso, Segmentado, useCargando } from '../components/ui.jsx';
 // Perfiles de la portada. El acceso es el mismo para todos: la app abre la pantalla que
 // corresponde según el rol de la cuenta; esto sólo orienta a quien entra.
 const PERFILES = [
-  { id: 'cliente', icono: '🏠', titulo: 'Soy cliente', texto: 'Seguí el avance de tu obra, fotos, lluvias y novedades.',
+  { id: 'cliente', icono: '🏠', titulo: 'Soy cliente',
     registro: 'Si Andorinas todavía no te dio acceso, creá tu cuenta y avisales para que te asignen la obra.' },
-  { id: 'proveedor', icono: '🛠️', titulo: 'Soy proveedor o gremio', texto: 'Cargá tu avance, fotos y respondé consultas.',
+  { id: 'proveedor', icono: '🛠️', titulo: 'Soy proveedor o gremio',
     registro: 'Después de crear la cuenta, Andorinas te habilita y te asigna las obras donde trabajás.' },
-  { id: 'admin', icono: '📋', titulo: 'Administración de obra', texto: 'Presupuestos, gastos, pagos y avance. Equipo de Andorinas.',
+  { id: 'admin', icono: '📋', titulo: 'Administración de obra',
     registro: 'Después de crear la cuenta, el administrador te habilita y te asigna las obras.' },
 ];
 const leerPerfil = () => { try { return localStorage.getItem('perfil-ingreso'); } catch { return null; } };
@@ -70,7 +70,7 @@ export default function Login() {
               {PERFILES.map((x) => (
                 <button type="button" key={x.id} className="perfil-opcion" onClick={() => elegir(x.id)}>
                   <span className="perfil-icono" aria-hidden="true">{x.icono}</span>
-                  <span><strong>{x.titulo}</strong><span className="texto-suave chico">{x.texto}</span></span>
+                  <span><strong>{x.titulo}</strong></span>
                   <span className="perfil-flecha" aria-hidden="true">›</span>
                 </button>
               ))}
@@ -80,7 +80,6 @@ export default function Login() {
         ) : (<>
         <button type="button" className="link chico perfil-volver" onClick={() => elegir(null)}>‹ Cambiar tipo de ingreso</button>
         <h1><span aria-hidden="true">{perfil.icono} </span>{perfil.titulo}</h1>
-        <p className="texto-suave">{perfil.texto}</p>
         {modo !== 'recuperar' && <Segmentado value={modo} onChange={(m) => { setModo(m); setError(null); }} nombre="Acceso" opciones={[['ingresar', 'Ingresar'], ['registrarse', 'Crear cuenta']]} />}
         {error && <Aviso tipo="error">{error}</Aviso>}
         {aviso && <Aviso tipo="info">{aviso}</Aviso>}

@@ -633,3 +633,5 @@ button.cal-dia:hover { border-color: var(--navy-2); }
   .informe-hoja section { break-inside: avoid; }
   .informe-hoja * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+.importe-input input[aria-invalid="true"] { border-color: var(--error); background: var(--error-bg); }

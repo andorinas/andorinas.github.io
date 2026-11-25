@@ -53,7 +53,12 @@ function ObraCliente() {
   const [error, setError] = useState(null);
   const [version, setVersion] = useState(0);
   const refrescar = () => setVersion((v) => v + 1);
-  useEffect(() => { portalObra(obraId).then(setP).catch((e) => setError(e.message)); }, [obraId]);
+  useEffect(() => {
+    // Al cambiar de obra se descarta la respuesta de la anterior si llega tarde.
+    let vivo = true; setP(null); setError(null);
+    portalObra(obraId).then((x) => vivo && setP(x)).catch((e) => vivo && setError(e.message));
+    return () => { vivo = false; };
+  }, [obraId]);
   useEffect(() => { listarReclamos(obraId).then(setConsultas).catch(() => {}); }, [obraId, version]);
   if (error && !p) return <main className="contenedor"><Aviso tipo="error">{error}</Aviso><Link className="btn" to="/">Mis obras</Link></main>;
   if (!p) return <main className="contenedor"><div className="esqueleto" /></main>;

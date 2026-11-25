@@ -208,7 +208,7 @@ export function ListaDocumentos({ documentos, acciones, vacia = 'Todavía no hay
           <button type="button" className="doc-abrir" onClick={() => abrirArchivo(d.ruta).catch((e) => toast(e.message, 'error'))}>
             <span className="doc-icono" aria-hidden="true">{ICONO_DOC[d.categoria]}</span>
             <span className="doc-txt"><strong>{d.titulo}</strong>
-              <span className="chico texto-suave">{CATEGORIA_DOC[d.categoria]} · {dmy(d.fecha || d.creado_en?.slice(0, 10))}{d.tamano ? ` · ${tamanoLegible(d.tamano)}` : ''}</span></span>
+              <span className="chico texto-suave">{CATEGORIA_DOC[d.categoria]} · {dmy(d.fecha || d.creado_en)}{d.tamano ? ` · ${tamanoLegible(d.tamano)}` : ''}</span></span>
             <span className="doc-ver chico">Abrir</span>
           </button>
           {acciones && acciones(d)}

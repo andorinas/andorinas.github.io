@@ -16,8 +16,8 @@ export default function NuevaObra() {
   const [cargando, run] = useCargando();
 
   useEffect(() => {
-    api('/api/catalogo').then((c) => setRubros(c.rubros.map((n, i) => ({ nombre: n, sel: i < 8 }))));
-    api('/api/usuarios').then((u) => setUsuarios(u.filter((x) => x.rol === 'encargado' && x.activo)));
+    api('/api/catalogo').then((c) => setRubros(c.rubros.map((n, i) => ({ nombre: n, sel: i < 8 })))).catch((e) => setError(`No se pudo cargar el catálogo de rubros (${e.message}). Revisá la conexión y volvé a intentar.`));
+    api('/api/usuarios').then((u) => setUsuarios(u.filter((x) => x.rol === 'encargado' && x.activo))).catch((e) => setError(`No se pudo cargar la lista de encargados (${e.message}). Revisá la conexión y volvé a intentar.`));
   }, []);
 
   const mover = (i, d) => setRubros((rs) => { const a = [...rs]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; });

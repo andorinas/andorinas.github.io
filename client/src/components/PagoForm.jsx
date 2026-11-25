@@ -12,6 +12,7 @@ export default function PagoForm({ obra, onClose, onListo, compromisoId }) {
   const [buscar, setBuscar] = useState('');
   const [f, setF] = useState({ fecha: hoyISO(), moneda_pago: 'ARS', importe_pagado: null, importe_cancelado: null, tcTxt: '', modoCruce: 'cancela', nota: '', es_anticipo: false });
   const [archivo, setArchivo] = useState(null);
+  const subido = useRef(null); // comprobante ya subido en un intento anterior
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState(null);
   const [cargando, run] = useCargando();
@@ -60,7 +61,8 @@ export default function PagoForm({ obra, onClose, onListo, compromisoId }) {
     try {
       setError(null);
       let adjunto_id = null;
-      if (archivo) adjunto_id = (await subirAdjunto(obra.id, archivo)).id;
+      // Si el pago falla después de subir el comprobante, el reintento reusa ese archivo (no lo sube dos veces).
+      if (archivo) { if (subido.current?.archivo !== archivo) subido.current = { archivo, id: (await subirAdjunto(obra.id, archivo)).id }; adjunto_id = subido.current.id; }
       const r = await api(`/api/compromisos/${sel.id}/pagos`, { method: 'POST', body: { ...cuerpo(), adjunto_id, clave_idem: clave } });
       toast(r.duplicado ? 'Ese pago ya estaba registrado (no se duplicó).' : `Pago registrado. Saldo: ${money(r.saldoResultante, sel.moneda)}`);
       onListo();

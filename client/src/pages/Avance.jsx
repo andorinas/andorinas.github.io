@@ -17,7 +17,9 @@ function EditorPesos({ rubros, onGuardado }) {
   const suma = Object.values(val).reduce((s, x) => s + (parseDecimal(x) || 0), 0);
   const falta = Math.round((100 - suma) * 100) / 100;
   const vacios = Object.values(val).filter((x) => x === '').length;
+  const invalidos = rubros.filter((x) => val[x.id] !== '' && (parseDecimal(val[x.id]) == null || parseDecimal(val[x.id]) > 100));
   const guardar = () => run(async () => {
+    if (invalidos.length) return setError(`Revisá el peso de ${invalidos.map((x) => x.nombre).join(', ')}: tiene que ser un número entre 0 y 100 (por ejemplo 12,5).`);
     try {
       setError(null);
       const r = await api(`/api/obras/${obra.id}/pesos`, { method: 'PUT', body: { pesos: rubros.map((x) => ({ rubro_id: x.id, peso: val[x.id] === '' ? null : parseDecimal(val[x.id]) })) } });
@@ -37,7 +39,7 @@ function EditorPesos({ rubros, onGuardado }) {
         {rubros.map((r) => (
           <li key={r.id}>
             <span>{r.nombre}</span>
-            <div className="importe-input chico"><input inputMode="decimal" value={val[r.id]} onChange={(e) => setVal({ ...val, [r.id]: e.target.value })} aria-label={`Peso ${r.nombre}`} placeholder="—" /><span className="importe-moneda">%</span></div>
+            <div className="importe-input chico"><input inputMode="decimal" aria-invalid={invalidos.some((x) => x.id === r.id)} value={val[r.id]} onChange={(e) => setVal({ ...val, [r.id]: e.target.value })} aria-label={`Peso ${r.nombre}`} placeholder="—" /><span className="importe-moneda">%</span></div>
             {falta > 0 && <button className="link chico" onClick={() => setVal({ ...val, [r.id]: String(Math.round(((parseDecimal(val[r.id]) || 0) + falta) * 100) / 100).replace('.', ',') })}>+{pct(falta)}</button>}
           </li>
         ))}
@@ -92,7 +94,7 @@ export default function Avance() {
   const toast = useToast();
   const { inf } = useInforme();
   const [hist, setHist] = useState([]);
-  useEffect(() => { api(`/api/obras/${obra.id}/avances`).then(setHist); }, [obra.id, version]);
+  useEffect(() => { api(`/api/obras/${obra.id}/avances`).then(setHist).catch((e) => toast(`No se pudo cargar el historial de avances: ${e.message}`, 'error')); }, [obra.id, version]);
   const rubros = obra.rubros.filter((r) => r.activo);
   const anular = async (a) => {
     const motivo = window.prompt(`Motivo para anular el avance de ${a.rubro} (${pct(a.porcentaje)} del ${dmy(a.fecha)}):`);

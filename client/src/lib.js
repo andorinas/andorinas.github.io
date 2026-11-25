@@ -13,11 +13,12 @@ export const money0 = (c, m) => (c == null ? '—' : `${Math.round(c / 100) < 0 
 export const numero = (c) => nf2.format(c / 100);
 export const pct = (v) => (v == null ? '—' : `${nfp.format(v)} %`);
 export const tc = (v) => (v == null ? '—' : `ARS ${nfTc.format(v)} por USD`);
-export const dmy = (iso) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
+export { dmy } from '../../shared/formato.js';
 export const dmyHora = (ts) => {
   if (!ts) return '';
   const d = new Date(ts);
-  return `${d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
+  const z = { timeZone: 'America/Argentina/Buenos_Aires' };
+  return `${d.toLocaleDateString('es-AR', { ...z, day: '2-digit', month: '2-digit', year: 'numeric' })} ${d.toLocaleTimeString('es-AR', { ...z, hour: '2-digit', minute: '2-digit' })}`;
 };
 export function hoyISO() {
   const d = new Date(Date.now() - 3 * 3600e3);

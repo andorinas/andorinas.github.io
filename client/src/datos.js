@@ -118,6 +118,7 @@ export async function subirAdjunto(obraId, file) {
 /** Abre un comprobante con un enlace temporal (60 s) firmado por Supabase, sólo si hay permiso. */
 export async function verAdjunto(adjuntoId) {
   const w = window.open('', '_blank');
+  if (w) w.opener = null; // la pestaña nueva no puede manipular la app
   try {
     const a = chk(await tabla('adjuntos').select('ruta').eq('id', adjuntoId).maybeSingle());
     if (!a) throw new ApiError(403, 'Sin acceso al comprobante');
@@ -180,7 +181,7 @@ const RUTAS = [
   ['POST', /^\/api\/logout$/, async () => { await salir(); return { ok: true }; }],
 
   ['GET', /^\/api\/usuarios$/, async () => {
-    const [us, asig] = await Promise.all([todo(() => tabla('perfiles').select('*').order('nombre')), todo(() => tabla('obra_usuarios').select('*'))]);
+    const [us, asig] = await Promise.all([todo(() => tabla('perfiles').select('*').order('nombre').order('id')), todo(() => tabla('obra_usuarios').select('*'))]);
     return us.map((u) => ({ ...u, obras: asig.filter((a) => a.usuario_id === u.id).map((a) => a.obra_id) }));
   }],
   ['PATCH', /^\/api\/usuarios\/([\w-]+)$/, async ([id], b) => { await rpc('actualizar_usuario', { p_id: id, p: b }); _dir = null; return { ok: true }; }],
@@ -201,7 +202,7 @@ const RUTAS = [
   }],
 
   ['GET', /^\/api\/obras$/, async () => {
-    const obras = await todo(() => tabla('obras').select('*').order('nombre'));
+    const obras = await todo(() => tabla('obras').select('*').order('nombre').order('id'));
     obras.sort((a, b) => (a.estado === 'finalizada') - (b.estado === 'finalizada') || a.nombre.localeCompare(b.nombre));
     return Promise.all(obras.map(async (o) => {
       const inf = await informe(o.id, { moneda: 'ARS', criterio: 'historico' });
@@ -344,7 +345,7 @@ export const agregarFotos = (obraId, p) => rpc('agregar_fotos', { p_obra: Number
 
 export async function listarPartes(obraId, { estado } = {}) {
   const [partes, rubros, dir] = await Promise.all([
-    todo(() => { let q = tabla('partes_avance').select('*').eq('obra_id', obraId); if (estado) q = q.eq('estado', estado); return q.order('creado_en', { ascending: false }); }),
+    todo(() => { let q = tabla('partes_avance').select('*').eq('obra_id', obraId); if (estado) q = q.eq('estado', estado); return q.order('creado_en', { ascending: false }).order('id', { ascending: false }); }),
     todo(() => tabla('rubros').select('id, nombre').eq('obra_id', obraId)), directorio(),
   ]);
   const nr = Object.fromEntries(rubros.map((r) => [r.id, r.nombre]));
@@ -389,7 +390,7 @@ export async function misObrasGremio() {
   const { data: { session } } = await supabase.auth.getSession();
   const [asig, obras, rubros] = await Promise.all([
     todo(() => tabla('gremio_rubros').select('*').eq('usuario_id', session.user.id)),
-    todo(() => tabla('obras').select('*').order('nombre')),
+    todo(() => tabla('obras').select('*').order('nombre').order('id')),
     todo(() => tabla('rubros').select('id, nombre, obra_id, activo')),
   ]);
   return obras.map((o) => ({ ...o, rubros: rubros.filter((r) => r.obra_id === o.id && asig.some((a) => a.rubro_id === r.id)) }))
@@ -399,7 +400,7 @@ export async function misObrasGremio() {
 /** Administración: obras con rubros y asignaciones de gremios. */
 export async function asignacionesGremios() {
   const [obras, rubros, asig] = await Promise.all([
-    todo(() => tabla('obras').select('id, nombre, estado').order('nombre')),
+    todo(() => tabla('obras').select('id, nombre, estado').order('nombre').order('id')),
     todo(() => tabla('rubros').select('id, nombre, obra_id, activo').order('orden')),
     todo(() => tabla('gremio_rubros').select('*')),
   ]);
@@ -456,7 +457,7 @@ export async function portalObra(obraId) {
 }
 
 /** Obras del cliente (las que el administrador le asignó). */
-export const misObrasCliente = () => todo(() => tabla('obras').select('id, nombre, ubicacion, estado, fecha_inicio').order('nombre'));
+export const misObrasCliente = () => todo(() => tabla('obras').select('id, nombre, ubicacion, estado, fecha_inicio').order('nombre').order('id'));
 
 /**
  * Lluvia diaria (mm) de la zona de la obra según NASA POWER (gratuito, datos de satélite y modelos; llega con ~2 días de demora).
@@ -510,7 +511,7 @@ export const ICONO_DOC = { plano: '📐', contrato: '📝', permiso: '🏛️', 
 
 export async function listarDocumentos(obraId) {
   const [docs, dir] = await Promise.all([
-    todo(() => tabla('documentos').select('*').eq('obra_id', obraId).eq('anulado', false).order('creado_en', { ascending: false })),
+    todo(() => tabla('documentos').select('*').eq('obra_id', obraId).eq('anulado', false).order('creado_en', { ascending: false }).order('id')),
     directorio(),
   ]);
   const ids = docs.map((d) => d.adjunto_id);
@@ -532,6 +533,7 @@ export const anularDocumento = (id) => rpc('anular_documento', { p_id: id });
 /** Abre un archivo del bucket con un enlace temporal (60 s), sólo si hay permiso para verlo. */
 export async function abrirArchivo(ruta) {
   const w = window.open('', '_blank');
+  if (w) w.opener = null; // la pestaña nueva no puede manipular la app
   try {
     const { signedUrl } = chk(await supabase.storage.from('adjuntos').createSignedUrl(ruta, 60));
     if (!signedUrl) throw new ApiError(403, 'No tenés acceso a este archivo');

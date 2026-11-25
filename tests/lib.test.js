@@ -35,3 +35,13 @@ test('mesesDesde: meses del informe mensual (QA-01)', async () => {
   assert.deepEqual(mesesDesde('2027-01-15', '2026-11-25'), [], 'obra futura: sin meses (antes rompía la pantalla)');
   assert.deepEqual(mesesDesde(null, '2026-11-25'), []);
 });
+
+test('dmy: fechas y timestamps en hora argentina (QA-06)', async () => {
+  const { dmy } = await import('../shared/formato.js');
+  assert.equal(dmy('2026-11-25'), '25/11/2026');
+  assert.equal(dmy('2026-11-26T00:30:00+00:00'), '25/11/2026', '21:30 de Argentina sigue siendo el 25');
+  assert.equal(dmy('2026-11-26T03:30:00.000Z'), '26/11/2026');
+  assert.equal(dmy('2026-11-25T23:59:00-03:00'), '25/11/2026');
+  assert.equal(dmy(null), '');
+  assert.equal(dmy(''), '');
+});

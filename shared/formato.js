@@ -7,7 +7,17 @@ export const money = (cents, moneda) => (cents == null ? '—' : `${moneda} ${nf
 export const money0 = (cents, moneda) => (cents == null ? '—' : `${moneda} ${nf0.format(Math.round(cents / 100))}`);
 export const tc = (v) => (v == null ? '—' : `ARS ${nfTc.format(v)} por USD`);
 export const pct = (v) => (v == null ? '—' : `${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(v)} %`);
-export const dmy = (iso) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '');
+/** Fecha DD/MM/AAAA. Acepta 'AAAA-MM-DD' o un instante (timestamp), que se muestra en hora argentina (UTC−3, sin horario de verano). */
+export const dmy = (v) => {
+  if (!v) return '';
+  const s = String(v);
+  let iso = s.slice(0, 10);
+  if (s.length > 10) {
+    const t = new Date(s).getTime();
+    if (!Number.isNaN(t)) iso = new Date(t - 3 * 3600e3).toISOString().slice(0, 10);
+  }
+  return iso.split('-').reverse().join('/');
+};
 
 export const CRITERIO = { historico: 'BNA vendedor histórico', manual: 'Dólar manual' };
 export const CONDICION = { contado: 'Contado', a_cuenta: 'A cuenta', contrato: 'Contratación' };

@@ -23,7 +23,7 @@ export default function DetalleCompromiso({ obra, id, onClose, onCambio, onPagar
   const [cat, setCat] = useState({ tipos: [] });
   const [cargando, run] = useCargando();
   const cargar = () => api(`/api/compromisos/${id}`).then(setC).catch((e) => setError(e.message));
-  useEffect(() => { cargar(); api('/api/catalogo').then(setCat); }, [id]);
+  useEffect(() => { cargar(); api('/api/catalogo').then(setCat).catch((e) => setError(`No se pudieron cargar rubros y tipos de gasto (${e.message}). Revisá la conexión y volvé a intentar.`)); }, [id]);
 
   if (!c) return <Sheet titulo="Movimiento" obra={obra.nombre} onClose={onClose}>{error ? <Aviso tipo="error">{error}</Aviso> : <div className="esqueleto" />}</Sheet>;
 

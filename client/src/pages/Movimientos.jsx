@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, money, money0, dmy, CONDICION, ESTADO_PAGO } from '../lib.js';
-import { useObra } from '../ctx.js';
+import { useObra, useToast } from '../ctx.js';
 import { Aviso, Chip, FechaInput } from '../components/ui.jsx';
 import { ControlesVista, useInforme, DescripcionVista, AvisoFaltantes, BotonesExportar } from '../components/Vista.jsx';
 
@@ -15,7 +15,8 @@ export default function Movimientos() {
   const { inf, error, q } = useInforme(filtros);
   const [cat, setCat] = useState({ tipos: [] });
   const [abiertos, setAbiertos] = useState(false);
-  useEffect(() => { api('/api/catalogo').then(setCat); }, []);
+  const toast = useToast();
+  useEffect(() => { api('/api/catalogo').then(setCat).catch((e) => toast(`No se pudieron cargar los filtros de tipo de gasto: ${e.message}`, 'error')); }, []);
   const setFiltro = (k, val) => { const n = new URLSearchParams(sp); if (val) n.set(k, val); else n.delete(k); setSp(n, { replace: true }); };
   const nFiltros = Object.keys(filtros).length;
 

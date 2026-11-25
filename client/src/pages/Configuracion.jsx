@@ -82,8 +82,8 @@ export default function Configuracion() {
   const [error, setError] = useState(null);
   const [cargando, run] = useCargando();
   useEffect(() => {
-    api('/api/usuarios').then((u) => setUsuarios(u.filter((x) => x.rol === 'encargado')));
-    api('/api/catalogo').then((c) => setTipos(c.tipos));
+    api('/api/usuarios').then((u) => setUsuarios(u.filter((x) => x.rol === 'encargado'))).catch((e) => toast(`No se pudo cargar la lista de encargados: ${e.message}`, 'error'));
+    api('/api/catalogo').then((c) => setTipos(c.tipos)).catch((e) => toast(`No se pudieron cargar los tipos de gasto: ${e.message}`, 'error'));
   }, []);
 
   const guardarObra = (e) => {

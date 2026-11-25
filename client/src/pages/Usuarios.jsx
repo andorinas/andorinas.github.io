@@ -28,9 +28,11 @@ export default function Usuarios() {
       toast('Obras del cliente actualizadas'); await cargarAsigCli();
     } catch (e) { toast(e.message, 'error'); } finally { setGuardando(false); }
   };
-  useEffect(() => { cargar(); api('/api/obras').then(setObras); }, []);
+  useEffect(() => { cargar(); api('/api/obras').then(setObras).catch((e) => toast(`No se pudo cargar la lista de obras: ${e.message}`, 'error')); }, []);
 
   const patch = async (u, body, msg) => { try { await api(`/api/usuarios/${u.id}`, { method: 'PATCH', body }); toast(msg); cargar(); } catch (e) { toast(e.message, 'error'); } };
+  // El nombre lo escribe cada uno al registrarse: el administrador lo puede corregir (por ejemplo, si alguien se puso un nombre engañoso).
+  const renombrar = (u) => { const n = window.prompt(`Nombre que se muestra para ${u.email}`, u.nombre || ''); if (n && n.trim() && n.trim() !== u.nombre) patch(u, { nombre: n.trim() }, 'Nombre actualizado'); };
   const [guardando, setGuardando] = useState(false);
   const toggleObra = async (u, oid) => {
     if (guardando) return;
@@ -62,7 +64,7 @@ export default function Usuarios() {
             {pendientes.map((u) => (
               <li key={u.id}>
                 <div className="fila-entre envolver">
-                  <div><strong>{u.nombre || u.email}</strong><div className="chico texto-suave">{u.email}</div></div>
+                  <div><strong>{u.nombre || u.email}</strong> <button className="link chico" onClick={() => renombrar(u)}>Cambiar nombre</button><div className="chico texto-suave">{u.email}</div></div>
                   <div className="fila-inline">
                     <button className="btn btn-primario btn-chico" onClick={() => patch(u, { rol: 'encargado' }, `${u.nombre || u.email} habilitado como encargado`)}>Habilitar encargado</button>
                     <button className="btn btn-sec btn-chico" onClick={() => patch(u, { rol: 'gremio' }, `${u.nombre || u.email} habilitado como gremio: asignale sus rubros`)}>Gremio</button>
@@ -83,7 +85,7 @@ export default function Usuarios() {
           {lista.filter((u) => u.rol !== 'pendiente' || !u.activo).map((u) => (
             <li key={u.id} className={u.activo ? '' : 'apagado'}>
               <div className="fila-entre envolver">
-                <div><strong>{u.nombre || u.email}</strong> <Chip tipo={u.rol === 'admin' ? 'info' : 'neutro'}>{ROL[u.rol]}</Chip>
+                <div><strong>{u.nombre || u.email}</strong> <Chip tipo={u.rol === 'admin' ? 'info' : 'neutro'}>{ROL[u.rol]}</Chip> <button className="link chico" onClick={() => renombrar(u)}>Cambiar nombre</button>
                   <div className="chico texto-suave">{u.email}{!u.activo && ' · inactivo'}</div></div>
                 {u.id !== user.id && (
                   <div className="fila-inline">

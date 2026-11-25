@@ -93,3 +93,56 @@ test('QA-05 · fechas: no posteriores a hoy ni más de un año antes del inicio;
   await enc.rpc('crear_novedad', { p_obra: O.obraId, p: { titulo: 'Sin fecha: usa hoy' } });
   await enc.rpc('agregar_fotos', { p_obra: O.obraId, p: { fecha: hoy, fotos: [f] } });
 });
+
+// ── Correcciones menores (migración 011) ───────────────────────────────────
+test('S-05 · un comprobante de gasto no se puede publicar como documento', async () => {
+  const { admin } = ctx;
+  const comp = await subir(admin, O.obraId, 'factura.pdf', 'application/pdf');
+  await admin.rpc('crear_gasto', { p_obra: O.obraId, p: { fecha: hoyAR(), concepto: 'Arena', rubro_id: O.r.Estructura, tipo_id: O.t.Materiales,
+    moneda: 'ARS', importe: $(500), condicion: 'contado', proveedor: 'Corralón', adjunto_id: comp } });
+  await assert.rejects(() => admin.rpc('crear_documento', { p_obra: O.obraId, p: { adjunto_id: comp, titulo: 'Factura', categoria: 'otro' } }), /comprobante, foto o documento/);
+  const plano = await subir(admin, O.obraId, 'plano-nuevo.pdf', 'application/pdf');
+  const d = await admin.rpc('crear_documento', { p_obra: O.obraId, p: { adjunto_id: plano, titulo: 'Plano', categoria: 'plano' } });
+  await assert.rejects(() => admin.rpc('crear_documento', { p_obra: O.obraId, p: { adjunto_id: plano, titulo: 'Plano otra vez' } }), /ya está cargado/);
+  await admin.rpc('anular_documento', { p_id: d.id });
+  await assert.rejects(() => admin.rpc('anular_documento', { p_id: d.id }), /ya estaba quitado/);
+});
+
+test('S-06 · lo anulado no se re-anula (se conserva el motivo original)', async () => {
+  const { admin } = ctx;
+  const g = await admin.rpc('crear_gasto', { p_obra: O.obraId, p: { fecha: hoyAR(), concepto: 'Para anular', rubro_id: O.r.Estructura, tipo_id: O.t.Materiales,
+    moneda: 'ARS', importe: $(800), condicion: 'a_cuenta', proveedor: 'Corralón' } });
+  g.pago_id = (await admin.rpc('registrar_pago', { p_comp: g.id, p: { fecha: hoyAR(), moneda_pago: 'ARS', importe_pagado: $(300) } })).id;
+  await admin.rpc('anular_pago', { p_id: g.pago_id, p_motivo: 'Cargado dos veces' });
+  await assert.rejects(() => admin.rpc('anular_pago', { p_id: g.pago_id, p_motivo: 'Otro motivo' }), /ya estaba anulado/);
+  await admin.rpc('anular_compromiso', { p_id: g.id, p_motivo: 'Error de carga' });
+  await assert.rejects(() => admin.rpc('anular_compromiso', { p_id: g.id, p_motivo: 'Otro' }), /ya estaba anulado/);
+  const [c] = await admin.query('select anulado_motivo from compromisos where id = $1', [g.id]);
+  const [p] = await admin.query('select anulado_motivo from pagos where id = $1', [g.pago_id]);
+  assert.equal(c.anulado_motivo, 'Error de carga');
+  assert.equal(p.anulado_motivo, 'Cargado dos veces', 'el pago conserva su motivo propio');
+  const av = await admin.rpc('cargar_avance', { p_rubro: O.r.Estructura, p: { fecha: hoyAR(), porcentaje: 15 } });
+  await admin.rpc('anular_avance', { p_id: av.id, p_motivo: 'Mal cargado' });
+  await assert.rejects(() => admin.rpc('anular_avance', { p_id: av.id, p_motivo: 'Otro' }), /ya estaba anulado/);
+  const n = await admin.rpc('crear_novedad', { p_obra: O.obraId, p: { titulo: 'Para quitar' } });
+  await admin.rpc('anular_novedad', { p_id: n.id });
+  await assert.rejects(() => admin.rpc('anular_novedad', { p_id: n.id }), /ya estaba quitada/);
+});
+
+test('B3 · partes y reclamos reenviados: mismo envío no duplica; otros datos con la misma clave se rechazan', async () => {
+  const p1 = await elec.rpc('crear_parte_avance', { p_rubro: O.r.Electricidad, p: { fecha: hoyAR(), porcentaje: 40, clave_idem: 'qa-parte-1' } });
+  const p2 = await elec.rpc('crear_parte_avance', { p_rubro: O.r.Electricidad, p: { fecha: hoyAR(), porcentaje: 40, clave_idem: 'qa-parte-1' } });
+  assert.equal(p2.id, p1.id); assert.equal(p2.duplicado, true);
+  await assert.rejects(() => elec.rpc('crear_parte_avance', { p_rubro: O.r.Electricidad, p: { fecha: hoyAR(), porcentaje: 55, clave_idem: 'qa-parte-1' } }), /otros datos/);
+  const r1 = await cli.rpc('crear_reclamo', { p_obra: O.obraId, p: { titulo: '¿Cuándo pintan?', clave_idem: 'qa-rec-1' } });
+  assert.equal((await cli.rpc('crear_reclamo', { p_obra: O.obraId, p: { titulo: '¿Cuándo pintan?', clave_idem: 'qa-rec-1' } })).id, r1.id);
+  await assert.rejects(() => cli.rpc('crear_reclamo', { p_obra: O.obraId, p: { titulo: 'Otra cosa', clave_idem: 'qa-rec-1' } }), /otros datos/);
+});
+
+test('B2 · no se aceptan partes de un rubro desactivado', async () => {
+  const { admin } = ctx;
+  await admin.rpc('actualizar_rubro', { p_id: O.r.Electricidad, p: { activo: false } });
+  await assert.rejects(() => elec.rpc('crear_parte_avance', { p_rubro: O.r.Electricidad, p: { fecha: hoyAR(), porcentaje: 60 } }), /desactivado/);
+  await admin.rpc('actualizar_rubro', { p_id: O.r.Electricidad, p: { activo: true } });
+  assert.ok((await elec.rpc('crear_parte_avance', { p_rubro: O.r.Electricidad, p: { fecha: hoyAR(), porcentaje: 60 } })).id, 'reactivado: vuelve a aceptar');
+});

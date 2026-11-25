@@ -77,7 +77,15 @@ export function FechaInput({ value, onChange, id, required, max }) {
   const [txt, setTxt] = useState(dmy(value));
   const [invalida, setInvalida] = useState(false);
   const nativo = useRef(null);
-  useEffect(() => { if (value) { setTxt(dmy(value)); setInvalida(false); } }, [value]);
+  useEffect(() => {
+    if (value) { setTxt(dmy(value)); setInvalida(false); }
+    else if (value === '') { setTxt(''); setInvalida(false); } // el formulario se vació desde afuera
+  }, [value]);
+  // Enter con una fecha a medio escribir: no envía el formulario con la fecha anterior; marca el campo.
+  const alEnter = (e) => {
+    if (e.key !== 'Enter' || !txt || parseDMY(txt)) return;
+    e.preventDefault(); setInvalida(true); onChange(null);
+  };
   const cambiar = (s) => {
     const t = normalizarFecha(s); setTxt(t);
     const iso = parseDMY(t);
@@ -88,7 +96,7 @@ export function FechaInput({ value, onChange, id, required, max }) {
   return (
     <div className={`fecha-input ${invalida ? 'invalida' : ''}`}>
       <input id={id} inputMode="numeric" placeholder="DD/MM/AAAA" value={txt} required={required} aria-invalid={invalida}
-        onChange={(e) => cambiar(e.target.value)}
+        onChange={(e) => cambiar(e.target.value)} onKeyDown={alEnter}
         onBlur={() => {
           // Fecha incompleta o inválida: queda marcada y el formulario no la toma (no se guarda otra fecha en silencio).
           if (txt && !parseDMY(txt)) { setInvalida(true); onChange(null); } else if (value) setTxt(dmy(value));

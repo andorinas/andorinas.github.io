@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, subirAdjunto, hoyISO, uuid, money, dmy, tc } from '../lib.js';
 import { Sheet, Campo, Segmentado, FechaInput, ImporteInput, Aviso, AdjuntoInput, useCargando } from './ui.jsx';
 import { useToast } from '../ctx.js';
@@ -71,12 +71,13 @@ export default function GastoForm({ obra, onClose, onListo, rubroInicial, recarg
     condicion: 'contado', proveedor: '', vencimiento: '', anticipo: null, anticipoFecha: '',
   });
   const [archivo, setArchivo] = useState(null);
+  const subido = useRef(null); // comprobante ya subido en un intento anterior
   const [error, setError] = useState(null);
   const [cargando, run] = useCargando();
   const cot = useCotizacion(f.fecha);
   const set = (k) => (v) => setF((x) => ({ ...x, [k]: v }));
 
-  useEffect(() => { api('/api/catalogo').then(setCat); }, []);
+  useEffect(() => { api('/api/catalogo').then(setCat).catch((e) => setError(`No se pudieron cargar rubros y tipos de gasto (${e.message}). Revisá la conexión y volvé a intentar.`)); }, []);
 
   const crearRubro = async (nombre) => {
     const { id } = await api(`/api/obras/${obra.id}/rubros`, { method: 'POST', body: { nombre } });
@@ -98,7 +99,8 @@ export default function GastoForm({ obra, onClose, onListo, rubroInicial, recarg
       try {
         setError(null);
         let adjunto_id = null;
-        if (archivo) adjunto_id = (await subirAdjunto(obra.id, archivo)).id;
+        // Si el alta falla después de subir el comprobante, el reintento reusa ese archivo (no lo sube dos veces).
+        if (archivo) { if (subido.current?.archivo !== archivo) subido.current = { archivo, id: (await subirAdjunto(obra.id, archivo)).id }; adjunto_id = subido.current.id; }
         const body = {
           fecha: f.fecha, concepto: f.concepto, rubro_id: f.rubro_id, tipo_id: f.tipo_id, moneda: f.moneda, importe: f.importe,
           condicion: f.condicion, proveedor: f.proveedor || null, adjunto_id, clave_idem: clave,

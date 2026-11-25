@@ -32,6 +32,21 @@ export function curvaPlan(rubros) {
   return fechas.map((fecha) => ({ fecha, avance: avancePlanificado(rubros, fecha) }));
 }
 
+/** Meses ('AAAA-MM') desde el inicio de la obra hasta hoy, del más reciente al más viejo. Vacío si la obra todavía no empezó. */
+export function mesesDesde(inicio, hoy) {
+  if (!inicio || !hoy || inicio > hoy) return [];
+  const out = [];
+  let [a, m] = inicio.slice(0, 7).split('-').map(Number);
+  const fin = hoy.slice(0, 7);
+  for (let k = 0; k < 1200; k++) {
+    const mes = `${a}-${String(m).padStart(2, '0')}`;
+    out.push(mes);
+    if (mes >= fin) break;
+    m += 1; if (m > 12) { m = 1; a += 1; }
+  }
+  return out.reverse();
+}
+
 /** Rango del plan: primer inicio y último fin (o null). */
 export function rangoPlan(rubros) {
   const r = (rubros || []).filter((x) => x.inicio_plan && x.fin_plan);

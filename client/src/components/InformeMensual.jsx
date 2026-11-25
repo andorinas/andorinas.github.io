@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { dmy, pct, hoyISO } from '../lib.js';
 import { Marca } from './ui.jsx';
 import { Calendario, resumenDias, avanceRubroAl, MESES } from './Portal.jsx';
-import { avancePlanificado, msDeIso, isoDeMs, DIA } from '../../../shared/plan.js';
+import { avancePlanificado, mesesDesde, msDeIso, isoDeMs, DIA } from '../../../shared/plan.js';
 
 const finDeMes = (mes) => { const [a, m] = mes.split('-').map(Number); return isoDeMs(Date.UTC(a, m, 0)); };
 const nombreMes = (mes) => `${MESES[Number(mes.slice(5)) - 1]} ${mes.slice(0, 4)}`;
@@ -14,13 +14,7 @@ const puntos = (v) => `${v > 0 ? '+' : ''}${String(Math.round(v * 10) / 10).repl
 export default function InformeMensual({ p, lluvia, onClose }) {
   const o = p.obra;
   const hoy = p.hoy || hoyISO();
-  const meses = useMemo(() => {
-    const out = [];
-    for (let d = new Date(Date.UTC(+o.fecha_inicio.slice(0, 4), +o.fecha_inicio.slice(5, 7) - 1, 1)); isoDeMs(d.getTime()) <= hoy; d.setUTCMonth(d.getUTCMonth() + 1)) {
-      out.push(isoDeMs(d.getTime()).slice(0, 7));
-    }
-    return out.reverse();
-  }, [o.fecha_inicio, hoy]);
+  const meses = useMemo(() => mesesDesde(o.fecha_inicio, hoy), [o.fecha_inicio, hoy]);
   const [mes, setMes] = useState(meses[0]);
   useEffect(() => {
     const esc = (e) => { if (e.key === 'Escape') onClose(); };
@@ -28,6 +22,17 @@ export default function InformeMensual({ p, lluvia, onClose }) {
     document.body.classList.add('imprimiendo-informe');
     return () => { document.removeEventListener('keydown', esc); document.body.classList.remove('imprimiendo-informe'); };
   }, [onClose]);
+
+  // Obra que todavía no empezó: no hay meses para informar.
+  if (!mes) return (
+    <div className="informe-fondo" role="dialog" aria-modal="true" aria-label="Informe mensual">
+      <div className="informe-barra no-imprimir"><span /><button type="button" className="btn btn-fantasma" onClick={onClose}>Cerrar</button></div>
+      <article className="informe-hoja">
+        <h1>Informe mensual</h1>
+        <p>La obra empieza el <strong>{dmy(o.fecha_inicio)}</strong>. El primer informe va a estar disponible a partir de ese mes.</p>
+      </article>
+    </div>
+  );
 
   const desde = `${mes}-01` < o.fecha_inicio ? o.fecha_inicio : `${mes}-01`;
   const hasta = finDeMes(mes) > hoy ? hoy : finDeMes(mes);

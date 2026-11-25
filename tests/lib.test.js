@@ -26,3 +26,12 @@ test('leerCoordenadas: formatos de Google Maps', () => {
   assert.equal(leerCoordenadas('-134.1, 20'), null);
   assert.equal(leerCoordenadas(''), null);
 });
+
+test('mesesDesde: meses del informe mensual (QA-01)', async () => {
+  const { mesesDesde } = await import('../shared/plan.js');
+  assert.deepEqual(mesesDesde('2026-06-15', '2026-09-02'), ['2026-09', '2026-08', '2026-07', '2026-06']);
+  assert.deepEqual(mesesDesde('2026-11-25', '2026-11-25'), ['2026-11'], 'obra que empieza hoy: un mes');
+  assert.deepEqual(mesesDesde('2026-11-01', '2027-01-10'), ['2027-01', '2026-12', '2026-11'], 'cruza el año');
+  assert.deepEqual(mesesDesde('2027-01-15', '2026-11-25'), [], 'obra futura: sin meses (antes rompía la pantalla)');
+  assert.deepEqual(mesesDesde(null, '2026-11-25'), []);
+});

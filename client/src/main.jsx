@@ -194,9 +194,30 @@ function App() {
   );
 }
 
+/** Red de contención: si una pantalla falla al dibujarse, muestra un aviso con salida en vez de dejar la app en blanco. */
+class ErrorPantalla extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error('[ControlAr] Error al dibujar la pantalla:', error, info?.componentStack); }
+  render() {
+    if (!this.state.error) return this.props.children;
+    const volver = () => { window.location.hash = '#/'; window.location.reload(); };
+    return (
+      <main className="login"><div className="login-form" role="alert">
+        <Marca />
+        <h1>Algo salió mal</h1>
+        <p>Esta pantalla no se pudo mostrar. Tus datos no se perdieron.</p>
+        <p className="texto-suave chico">Si vuelve a pasar, avisale al administrador indicando qué estabas haciendo.</p>
+        <button className="btn btn-primario btn-bloque" onClick={volver}>Volver al inicio</button>
+        <button className="btn btn-fantasma btn-bloque" onClick={() => window.location.reload()}>Reintentar</button>
+      </div></main>
+    );
+  }
+}
+
 function NoEncontrado() {
   const nav = useNavigate();
   return <main className="contenedor"><h1>Página no encontrada</h1><button className="btn" onClick={() => nav('/')}>Volver a obras</button></main>;
 }
 
-createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);
+createRoot(document.getElementById('root')).render(<React.StrictMode><ErrorPantalla><App /></ErrorPantalla></React.StrictMode>);

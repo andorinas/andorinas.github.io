@@ -2,7 +2,7 @@
 // Corre todo en el navegador: Postgres en memoria (PGlite) con las migraciones reales,
 // datos de ejemplo ficticios y archivos guardados en memoria. No se conecta a internet.
 import { PGlite } from '@electric-sql/pglite';
-import { sembrar } from './semilla.js';
+import { sembrar, foto, comprobante } from './semilla.js';
 
 const SQLS = import.meta.glob('../../../supabase/migraciones/*.sql', { query: '?raw', import: 'default', eager: true });
 
@@ -72,7 +72,8 @@ const listo = (async () => {
   sessionStorage.setItem('demo-usuario', quien);
   const u = usuarios[quien];
   actual = u ? { id: u.id, email: u.email } : null;
-  window.__demo = { usuarios, clienteDe, pg, listo: true };
+  // Generadores de imágenes de ejemplo para que el agente de demostración adjunte fotos y comprobantes.
+  window.__demo = { usuarios, clienteDe, pg, listo: true, foto, comprobante };
 })();
 
 // ── Consultas tipo PostgREST ──────────────────────────────────────────────
@@ -144,7 +145,15 @@ export const supabase = {
       setTimeout(() => emitir('SIGNED_IN'), 0);
       return { data: { session: sesion() }, error: null };
     },
-    signUp: async () => ({ data: { session: null, user: null }, error: null }),
+    // Alta como en Supabase: crea el usuario (queda pendiente por el trigger de perfiles) y pide confirmar el email.
+    signUp: async ({ email, options }) => {
+      await listo;
+      const ya = (await pg.query('select 1 from auth.users where lower(email) = lower($1)', [email])).rows.length;
+      if (ya) return { data: null, error: { message: 'User already registered' } };
+      const id = crypto.randomUUID();
+      await pg.query('insert into auth.users (id, email, raw_user_meta_data) values ($1, $2, $3)', [id, email, JSON.stringify(options?.data || {})]);
+      return { data: { session: null, user: { id, email } }, error: null };
+    },
     resetPasswordForEmail: async () => ({ data: {}, error: null }),
     updateUser: async () => ({ data: {}, error: null }),
     signOut: async (opt = {}) => {

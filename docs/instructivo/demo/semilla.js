@@ -5,7 +5,7 @@ const $ = (x) => Math.round(x * 100);
 function lienzo(w = 960, h = 720) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
 const aBlob = (c) => new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.85));
 
-function foto(escena, semilla = 1) {
+export function foto(escena, semilla = 1) {
   const [c, g] = lienzo();
   const r = (() => { let s = semilla * 9301 + 49297; return () => ((s = (s * 9301 + 49297) % 233280) / 233280); })();
   const cielo = g.createLinearGradient(0, 0, 0, 480);
@@ -50,7 +50,7 @@ function foto(escena, semilla = 1) {
   return aBlob(c);
 }
 
-function comprobante(titulo, lineas, total) {
+export function comprobante(titulo, lineas, total) {
   const [c, g] = lienzo(720, 960);
   g.fillStyle = '#fdfdfb'; g.fillRect(0, 0, 720, 960);
   g.fillStyle = '#222'; g.font = '700 34px sans-serif'; g.fillText(titulo, 48, 90);

@@ -8,7 +8,7 @@ const archivo = path.resolve(DIR, process.argv[2]); const tiempos = (process.arg
 const salida = path.join(DIR, 'cuadros'); fs.mkdirSync(salida, { recursive: true });
 const P = 9900 + Math.floor(Math.random() * 90);
 const perfil = fs.mkdtempSync(path.join(os.tmpdir(), 'edge-video-'));
-const edge = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', ['--headless=new', `--remote-debugging-port=${P}`, `--user-data-dir=${perfil}`, '--allow-file-access-from-files', '--autoplay-policy=no-user-gesture-required', 'about:blank'], { stdio: 'ignore' });
+const edge = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', ['--headless=new', `--remote-debugging-port=${P}`, `--user-data-dir=${perfil}`, '--allow-file-access-from-files', '--autoplay-policy=no-user-gesture-required', '--disable-gpu', 'about:blank'], { stdio: 'ignore' });
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 let ws; for (let i = 0; i < 50 && !ws; i++) { try { const p = (await (await fetch(`http://127.0.0.1:${P}/json/list`)).json()).find((x) => x.type === 'page'); if (p) { ws = new WebSocket(p.webSocketDebuggerUrl); await new Promise((ok) => (ws.onopen = ok)); } } catch {} if (!ws) await espera(300); }
 let nid = 0; const pend = new Map();

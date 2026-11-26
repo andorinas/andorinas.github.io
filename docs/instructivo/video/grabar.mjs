@@ -41,6 +41,8 @@ const PUERTO = 9600 + Math.floor(Math.random() * 300);
 const perfil = fs.mkdtempSync(path.join(os.tmpdir(), 'edge-video-'));
 const edge = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', ['--headless=new', `--remote-debugging-port=${PUERTO}`, `--user-data-dir=${perfil}`,
   '--allow-file-access-from-files', '--autoplay-policy=no-user-gesture-required', '--disable-background-timer-throttling',
+  // El codificador H.264 por placa de video se cuelga en Edge 158 sin ventana: se usa el de software (igual de nítido).
+  '--disable-accelerated-video-encode',
   '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--no-first-run', 'about:blank'], { stdio: 'ignore' });
 const cerrar = () => spawn('taskkill', ['/PID', String(edge.pid), '/T', '/F'], { stdio: 'ignore' });
 
@@ -74,6 +76,7 @@ try {
     for (;;) {
       await espera(2000);
       const est = await evaluar('({ e: window.__estado, t: window.__t, total: window.__total, fin: window.__fin, error: window.__error })');
+      if (process.env.DEPURAR) console.log('  estado:', JSON.stringify({ e: est.e, t: est.t, total: est.total, error: est.error }));
       if (est.error) throw new Error(est.error);
       if (est.e === 'listo') { console.log(`✓ ${v.archivo}: ${(est.fin.tamano / 1048576).toFixed(1)} MB, ${Math.round(est.fin.duracion)} s, ${est.fin.mime}`); break; }
       const pct = est.total ? Math.floor((est.t / est.total) * 10) : 0;

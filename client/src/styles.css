@@ -635,3 +635,14 @@ button.cal-dia:hover { border-color: var(--navy-2); }
 }
 
 .importe-input input[aria-invalid="true"] { border-color: var(--error); background: var(--error-bg); }
+
+/* Ayuda dentro de la app */
+.ayuda h1 { margin: 8px 0 4px; }
+.ayuda-grupo { margin-top: 18px; }
+.ayuda-perfil { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--navy-2); margin: 0 0 8px; }
+.ayuda-grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.ayuda-item { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.ayuda-item h3 { margin: 0; font-size: 1.05rem; }
+.ayuda-video { width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; background: #0f1a2b; }
+.ayuda-item .btn { align-self: flex-start; }
+.btn.deshabilitado { opacity: .6; pointer-events: none; }

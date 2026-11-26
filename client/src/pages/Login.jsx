@@ -75,7 +75,7 @@ export default function Login() {
                 </button>
               ))}
             </div>
-            <a href="ayuda/" target="_blank" rel="noopener" className="link chico">¿Cómo se usa? Ver videos e instructivo</a>
+            <a href="ayuda/" target="_blank" rel="noopener" className="link chico">¿Cómo se usa?</a>
           </>
         ) : (<>
         <button type="button" className="link chico perfil-volver" onClick={() => elegir(null)}>‹ Cambiar tipo de ingreso</button>
@@ -99,7 +99,7 @@ export default function Login() {
         {modo === 'ingresar' && <button type="button" className="link chico" onClick={() => { setModo('recuperar'); setError(null); }}>Olvidé mi contraseña</button>}
         {modo === 'recuperar' && <button type="button" className="link chico" onClick={() => setModo('ingresar')}>Volver a ingresar</button>}
         {modo === 'registrarse' && <p className="texto-suave chico">{perfil.registro}</p>}
-        <a href="ayuda/" target="_blank" rel="noopener" className="link chico">¿Cómo se usa? Ver videos e instructivo</a>
+        <a href="ayuda/" target="_blank" rel="noopener" className="link chico">¿Cómo se usa?</a>
         </>)}
       </form>
     </main>

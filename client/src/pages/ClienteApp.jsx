@@ -5,6 +5,7 @@ import { misObrasCliente, portalObra, listarReclamos } from '../datos.js';
 import { dmy, ESTADO_OBRA } from '../lib.js';
 import { useAuth } from '../ctx.js';
 import { Marca, Aviso, Chip, Segmentado } from '../components/ui.jsx';
+import Ayuda from './Ayuda.jsx';
 import { NuevoReclamo, ReclamoDetalle, ListaReclamos } from '../components/Gremios.jsx';
 import PortalObra from '../components/Portal.jsx';
 
@@ -15,7 +16,7 @@ function Cabecera() {
       <Link to="/" className="cabecera-marca" aria-label="Inicio"><Marca compacta claro alto={30} /><span className="cabecera-app">Mi obra</span></Link>
       <nav className="cabecera-nav">
         <span className="cabecera-user">{user.nombre}</span>
-        <a href="ayuda/" target="_blank" rel="noopener" className="link-cab">Ayuda</a>
+        <Link to="/ayuda" className="link-cab">Ayuda</Link>
         <button className="btn btn-fantasma btn-chico" onClick={logout}>Salir</button>
       </nav>
     </header>
@@ -93,6 +94,7 @@ export default function ClienteApp() {
       <Cabecera />
       <Routes>
         <Route path="/" element={<MisObras />} />
+        <Route path="/ayuda" element={<Ayuda />} />
         <Route path="/obra/:obraId" element={<ObraCliente />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -5,6 +5,7 @@ import { misObrasGremio, listarPartes, listarReclamos, listarFotos } from '../da
 import { dmy, pct } from '../lib.js';
 import { useAuth } from '../ctx.js';
 import { Marca, Aviso, Chip, Segmentado } from '../components/ui.jsx';
+import Ayuda from './Ayuda.jsx';
 import { ParteForm, NuevoReclamo, ReclamoDetalle, ListaReclamos, TarjetaParte, GaleriaFotos } from '../components/Gremios.jsx';
 
 function Cabecera() {
@@ -14,7 +15,7 @@ function Cabecera() {
       <Link to="/" className="cabecera-marca" aria-label="Inicio"><Marca compacta claro alto={30} /><span className="cabecera-app">Gremios</span></Link>
       <nav className="cabecera-nav">
         <span className="cabecera-user">{user.nombre} · Gremio</span>
-        <a href="ayuda/" target="_blank" rel="noopener" className="link-cab">Ayuda</a>
+        <Link to="/ayuda" className="link-cab">Ayuda</Link>
         <button className="btn btn-fantasma btn-chico" onClick={logout}>Salir</button>
       </nav>
     </header>
@@ -112,6 +113,7 @@ export default function GremioApp() {
       <Cabecera />
       <Routes>
         <Route path="/" element={<MisObras />} />
+        <Route path="/ayuda" element={<Ayuda />} />
         <Route path="/obra/:obraId" element={<ObraGremio />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

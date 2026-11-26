@@ -118,6 +118,35 @@ export const VIDEOS = [
         texto: 'Así trabaja ControlAr: la empresa controla costos y avance, los gremios informan desde la obra, y el cliente sigue su casa sin tener que preguntar. Cada uno ve sólo lo que le corresponde.' },
     ],
   },
+  {
+    // Guía para clientes: usa los cuadros que deja el agente de demostración (agente/obra-completa.mjs).
+    archivo: 'ControlAr-video-clientes',
+    titulo: 'ControlAr · Guía para clientes',
+    escenas: [
+      { tipo: 'portada', titulo: 'Guía para clientes', sub: 'Seguí tu obra desde el celular o la computadora',
+        texto: 'Esta es la guía de ControlAr para clientes de Andorinas. Desde el celular o la computadora vas a poder ver cómo avanza tu obra, sin tener que preguntar. Las pantallas son de una obra de ejemplo.' },
+      { titulo: 'Cómo entrar', imgs: ['O31-cliente-ingreso'],
+        texto: 'Entrá a andorinas.github.io y elegí Soy cliente. La primera vez tocá Crear cuenta, confirmá tu email y avisale a Andorinas para que te asigne tu obra. Después, entrás con tu email y tu contraseña.' },
+      { titulo: 'Tu obra', imgs: ['O32-portal'],
+        texto: 'Arriba ves los datos de tu obra: cuándo empezó, la fecha de entrega prevista, cuántos días lleva y cuántos faltan.' },
+      { titulo: '¿Cuánto avanzó?', imgs: ['O33-portal-avance'],
+        texto: 'El anillo muestra el avance general, y al lado, el de cada etapa. La app lo compara con el plan: si va atrasada, te lo dice, y te muestra si se perdieron días por lluvia.' },
+      { titulo: 'Cronograma', imgs: ['O34-portal-cronograma'],
+        texto: 'En el cronograma ves cuándo está prevista cada etapa y cuánto se hizo de cada una. La línea roja marca el día de hoy.' },
+      { titulo: 'Clima y días de trabajo', imgs: ['O35-portal-clima'],
+        texto: 'En el calendario ves qué días se trabajó, cuáles a medias y cuáles no, y cuántos milímetros llovió en la zona de tu obra.' },
+      { titulo: 'Novedades, fotos y documentos', imgs: ['O36-portal-novedades', 'O37-portal-documentos'],
+        texto: 'Más abajo están las novedades que publica la empresa, las fotos de la obra, y los documentos: planos, contrato y permisos. Tocá uno para abrirlo.' },
+      { titulo: 'Informe mensual', imgs: ['O38-informe-mensual'],
+        texto: 'Con Informe mensual tenés un resumen de cada mes: el avance, los días de lluvia, las novedades y las fotos. Lo podés imprimir o guardar en PDF.' },
+      { titulo: 'Hacer una consulta', imgs: ['O39-cliente-consulta', 'O41-cliente-respuesta'],
+        texto: 'Si tenés una duda, tocá Hacer una consulta, escribí el asunto y tu pregunta, y agregá fotos si hace falta. La respuesta de Andorinas aparece en la pestaña Consultas.' },
+      { titulo: 'En el celular', imgs: ['O40-cliente-celular'],
+        texto: 'En el celular es igual: entrás, ves tu obra y hacés consultas desde donde estés.' },
+      { tipo: 'portada', titulo: '¡Listo!', sub: 'Ante cualquier duda, consultá con Andorinas',
+        texto: 'Listo. Con ControlAr seguís tu obra de cerca, cuando quieras. Ante cualquier duda, hacé una consulta desde la app.' },
+    ],
+  },
 ];
 
 // Cómo se pronuncian algunas palabras (sólo para la voz; el subtítulo muestra el texto original).

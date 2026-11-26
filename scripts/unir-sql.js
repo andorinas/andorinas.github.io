@@ -26,7 +26,7 @@ fs.writeFileSync('supabase/instalar.sql', cabecera + '\n' + partes.join('\n') + 
 console.log('supabase/instalar.sql generado');
 
 // Actualización de una base ya instalada: columnas nuevas + todas las funciones y permisos (todo re-ejecutable).
-const actualizar = ['006_revision.sql', '003_funciones.sql', '004_almacenamiento.sql', '005_permisos_funciones.sql', '007_gremios.sql', '008_clientes.sql', '009_plan_documentos.sql', '010_correcciones_auditoria.sql', '011_correcciones_menores.sql']
+const actualizar = ['006_revision.sql', '003_funciones.sql', '004_almacenamiento.sql', '005_permisos_funciones.sql', '007_gremios.sql', '008_clientes.sql', '009_plan_documentos.sql', '010_correcciones_auditoria.sql', '011_correcciones_menores.sql', '012_ayuda_por_rol.sql']
   .map((f) => `-- ════════ ${f} ════════\n${fs.readFileSync(path.join(dir, f), 'utf8')}`);
 fs.writeFileSync('supabase/actualizar.sql', `-- ControlAr · ACTUALIZACIÓN de una base ya instalada (no borra datos; se puede ejecutar más de una vez).
 -- Pegar en Supabase → SQL Editor → Run. Generado por: npm run sql

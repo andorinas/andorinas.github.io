@@ -53,9 +53,9 @@ export function clienteDe(uid) {
     }),
     rpcTabla: (fn) => ejecutar(uid, async (tx) => (await tx.query(`select * from public.${fn}()`)).rows),
     query: (sql, p = []) => ejecutar(uid, async (tx) => (await tx.query(sql, p)).rows),
-    subir: (ruta, blob) => ejecutar(uid, async (tx) => {
-      await tx.query("insert into storage.objects (bucket_id, name, owner) values ('adjuntos', $1, auth.uid())", [ruta]);
-      archivos.set(ruta, blob);
+    subir: (ruta, blob, bucket = 'adjuntos') => ejecutar(uid, async (tx) => {
+      await tx.query("insert into storage.objects (bucket_id, name, owner) values ($2, $1, auth.uid()) on conflict do nothing", [ruta, bucket]);
+      archivos.set(ruta, blob); urls.delete(ruta); // si se reemplaza, el enlace viejo deja de servir
     }),
   };
 }
@@ -165,9 +165,15 @@ export const supabase = {
     onAuthStateChange: (cb) => { oyentes.add(cb); return { data: { subscription: { unsubscribe: () => oyentes.delete(cb) } } }; },
   },
   storage: {
-    from: () => ({
-      upload: async (ruta, file) => { await listo; return res(clienteDe(actual?.id).subir(ruta, file).then(() => ({ path: ruta }))); },
-      createSignedUrl: async (ruta) => ({ data: { signedUrl: urlDe(ruta) }, error: null }),
+    from: (bucket = 'adjuntos') => ({
+      upload: async (ruta, file) => { await listo; return res(clienteDe(actual?.id).subir(ruta, file, bucket).then(() => ({ path: ruta }))); },
+      // Como en Supabase: sólo se firma si el usuario puede ver el archivo (permisos del almacén).
+      createSignedUrl: async (ruta) => {
+        await listo;
+        const r = await res(ejecutar(actual?.id, async (tx) => (await tx.query('select 1 from storage.objects where bucket_id = $1 and name = $2', [bucket, ruta])).rows));
+        if (r.error || !r.data.length || !archivos.has(ruta)) return { data: null, error: { message: 'Object not found' } };
+        return { data: { signedUrl: urlDe(ruta) }, error: null };
+      },
       createSignedUrls: async (rutas) => ({ data: rutas.map((r) => ({ path: r, signedUrl: urlDe(r), error: null })), error: null }),
       remove: async (rutas) => { rutas.forEach((r) => archivos.delete(r)); return { data: [], error: null }; },
     }),

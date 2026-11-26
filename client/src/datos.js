@@ -544,3 +544,37 @@ export async function abrirArchivo(ruta) {
 /** Administración: obras asignadas a cada cliente. */
 export const asignacionesClientes = () => todo(() => tabla('obra_clientes').select('*'));
 export const asignarObrasCliente = (usuarioId, obras) => rpc('asignar_obras_cliente', { p_usuario: usuarioId, p_obras: obras });
+
+// ── Ayuda por rol (bucket privado 'ayuda', migración 012) ───────────────────
+// Cada usuario sólo puede abrir lo de su perfil: la base lo controla; esta lista sólo ordena y describe el material.
+export const MATERIAL_AYUDA = [
+  { ruta: 'empresa/video-empresa.mp4', perfil: 'empresa', tipo: 'video', titulo: 'Guía en video para administradores y encargados',
+    texto: 'Gastos, pagos, movimientos, avance, partes de gremios, fotos, reclamos, el Tablero, informes y las tareas del administrador.' },
+  { ruta: 'empresa/video-obra-completa.mp4', perfil: 'empresa', tipo: 'video', titulo: 'Una obra de punta a punta',
+    texto: 'Cómo trabajan juntos la empresa, los gremios y el cliente en una obra, desde que se crea hasta que el cliente sigue el avance.' },
+  { ruta: 'empresa/instructivo.pdf', perfil: 'empresa', tipo: 'pdf', titulo: 'Instructivo completo en PDF',
+    texto: 'Paso a paso con capturas de cada pantalla, preguntas frecuentes y quién puede hacer qué.' },
+  { ruta: 'gremios/video-gremios.mp4', perfil: 'gremios', tipo: 'video', titulo: 'Guía para gremios',
+    texto: 'Informar el avance con fotos y hacer reclamos desde el celular.' },
+  { ruta: 'clientes/video-clientes.mp4', perfil: 'clientes', tipo: 'video', titulo: 'Guía para clientes',
+    texto: 'Seguir tu obra: avance, cronograma, clima, novedades, fotos, documentos, informe mensual y consultas.' },
+];
+const PERFILES_AYUDA = { admin: ['empresa', 'gremios', 'clientes'], encargado: ['empresa', 'gremios', 'clientes'], gremio: ['gremios'], cliente: ['clientes'] };
+
+/** Material de ayuda que puede ver el usuario, con enlaces temporales (2 horas). Lo que no existe o no está permitido no aparece. */
+export async function materialAyuda(rol) {
+  const perfiles = PERFILES_AYUDA[rol] || [];
+  const items = MATERIAL_AYUDA.filter((m) => perfiles.includes(m.perfil));
+  const res = await Promise.all(items.map(async (m) => {
+    const { data, error } = await supabase.storage.from('ayuda').createSignedUrl(m.ruta, 7200);
+    return error || !data?.signedUrl ? { ...m, url: null } : { ...m, url: data.signedUrl };
+  }));
+  return res;
+}
+/** Administrador: sube o reemplaza un archivo de ayuda. */
+export async function subirAyuda(ruta, archivo) {
+  const tipo = ruta.endsWith('.pdf') ? 'application/pdf' : 'video/mp4';
+  if (archivo.type && archivo.type !== tipo) throw new ApiError(400, `El archivo tiene que ser ${tipo === 'application/pdf' ? 'un PDF' : 'un video MP4'}`);
+  if (archivo.size > 50 * 1024 * 1024) throw new ApiError(400, 'El archivo supera 50 MB');
+  chk(await supabase.storage.from('ayuda').upload(ruta, archivo, { upsert: true, contentType: tipo, cacheControl: '3600' }));
+}

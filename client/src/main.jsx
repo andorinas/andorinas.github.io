@@ -28,6 +28,7 @@ import ClienteApp from './pages/ClienteApp.jsx';
 import Diario from './pages/Diario.jsx';
 import VistaCliente from './pages/VistaCliente.jsx';
 import Documentos from './pages/Documentos.jsx';
+import Ayuda from './pages/Ayuda.jsx';
 
 function Toasts({ items }) {
   return <div className="toasts" aria-live="polite">{items.map((t) => <div key={t.id} className={`toast toast-${t.tipo}`}>{t.msg}</div>)}</div>;
@@ -75,7 +76,7 @@ function Cabecera() {
       <nav className="cabecera-nav">
         <Link to="/cotizaciones" className="link-cab">Dólar BNA</Link>
         {user.rol === 'admin' && <Link to="/usuarios" className="link-cab">Usuarios</Link>}
-        <a href="ayuda/" target="_blank" rel="noopener" className="link-cab">Ayuda</a>
+        <Link to="/ayuda" className="link-cab">Ayuda</Link>
         <button className="cabecera-user btn-texto-cab" title={`${user.email} · cambiar contraseña`} onClick={() => setClave(true)}>{user.nombre} · {user.rol === 'admin' ? 'Administrador' : 'Encargado'}</button>
         <button className="link-cab btn-texto-cab solo-celular" onClick={() => setClave(true)} aria-label="Mi contraseña">🔑</button>
         <button className="btn btn-fantasma btn-chico" onClick={logout}>Salir</button>
@@ -171,6 +172,7 @@ function App() {
                 <Route path="/obras/nueva" element={user.rol === 'admin' ? <NuevaObra /> : <Navigate to="/" />} />
                 <Route path="/usuarios" element={user.rol === 'admin' ? <Usuarios /> : <Navigate to="/" />} />
                 <Route path="/cotizaciones" element={<Cotizaciones />} />
+                <Route path="/ayuda" element={<Ayuda />} />
                 <Route path="/obras/:obraId" element={<ObraLayout />}>
                   <Route index element={<Tablero />} />
                   <Route path="movimientos" element={<Movimientos />} />

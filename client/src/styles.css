@@ -646,3 +646,10 @@ button.cal-dia:hover { border-color: var(--navy-2); }
 .ayuda-video { width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; background: #0f1a2b; }
 .ayuda-item .btn { align-self: flex-start; }
 .btn.deshabilitado { opacity: .6; pointer-events: none; }
+
+/* Contraseña con botón para mostrarla */
+.clave-input { position: relative; display: flex; }
+.clave-input input { flex: 1; padding-right: 48px; }
+.clave-ver { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; display: grid; place-items: center; background: none; border: 0; border-radius: 8px; color: var(--gris); cursor: pointer; }
+.clave-ver:hover, .clave-ver:focus-visible { color: var(--ink); background: var(--fondo); }
+.clave-ver[aria-pressed="true"] { color: var(--navy); }

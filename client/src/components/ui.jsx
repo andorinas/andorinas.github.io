@@ -160,6 +160,23 @@ export function Barra({ valor, tono }) {
   return <div className="barra" aria-hidden="true"><div className={`barra-relleno ${tono || ''}`} style={{ width: `${Math.max(0, Math.min(100, valor || 0))}%` }} /></div>;
 }
 
+/** Campo de contraseña con botón para mostrarla u ocultarla (el ojo). Recibe las mismas props que un input. */
+export function ClaveInput(props) {
+  const [ver, setVer] = useState(false);
+  return (
+    <div className="clave-input">
+      <input {...props} type={ver ? 'text' : 'password'} autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+      <button type="button" className="clave-ver" onClick={() => setVer((v) => !v)} aria-pressed={ver}
+        aria-label={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'} title={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
+          {ver && <path d="M3 3l18 18" />}
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 export function AdjuntoInput({ onFile, archivo, foto }) {
   return (
     <div className="adjunto-input">

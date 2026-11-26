@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ingresar, registrarse, recuperarPassword } from '../datos.js';
 import { useAuth } from '../ctx.js';
-import { Marca, Aviso, Segmentado, useCargando } from '../components/ui.jsx';
+import { Marca, Aviso, Segmentado, ClaveInput, useCargando } from '../components/ui.jsx';
 
 // Perfiles de la portada. El acceso es el mismo para todos: la app abre la pantalla que
 // corresponde según el rol de la cuenta; esto sólo orienta a quien entra.
@@ -91,7 +91,7 @@ export default function Login() {
           <input type="email" autoComplete="username" value={f.email} onChange={set('email')} required autoFocus /></label>
         {modo !== 'recuperar' && (
           <label className="campo"><span className="campo-label">Contraseña{modo === 'registrarse' ? ' (mínimo 8 caracteres)' : ''}</span>
-            <input type="password" autoComplete={modo === 'ingresar' ? 'current-password' : 'new-password'} value={f.password} onChange={set('password')} required minLength={modo === 'registrarse' ? 8 : undefined} /></label>
+            <ClaveInput autoComplete={modo === 'ingresar' ? 'current-password' : 'new-password'} value={f.password} onChange={set('password')} required minLength={modo === 'registrarse' ? 8 : undefined} /></label>
         )}
         <button className="btn btn-primario btn-bloque" disabled={cargando}>
           {cargando ? 'Un momento…' : modo === 'ingresar' ? 'Ingresar' : modo === 'registrarse' ? 'Crear cuenta' : 'Enviar enlace'}

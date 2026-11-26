@@ -10,7 +10,7 @@ import './styles.css';
 import { AuthCtx, ToastCtx, useAuth, useToast } from './ctx.js';
 import { supabase, configurado, enlaceEmail } from './supabase.js';
 import { perfilActual, ingresar, nuevaPassword, salir } from './datos.js';
-import { Marca, Sheet, Campo, Aviso, useCargando } from './components/ui.jsx';
+import { Marca, Sheet, Campo, Aviso, ClaveInput, useCargando } from './components/ui.jsx';
 import Login from './pages/Login.jsx';
 import Obras from './pages/Obras.jsx';
 import NuevaObra from './pages/NuevaObra.jsx';
@@ -57,9 +57,9 @@ function MiPassword({ onClose, recuperacion }) {
     <Sheet titulo={recuperacion ? 'Elegí una contraseña nueva' : 'Mi contraseña'} onClose={onClose}>
       <form className="form" onSubmit={enviar}>
         {error && <Aviso tipo="error">{error}</Aviso>}
-        {!recuperacion && <Campo label="Contraseña actual" req><input type="password" autoComplete="current-password" value={f.actual} onChange={(e) => setF({ ...f, actual: e.target.value })} required /></Campo>}
-        <Campo label="Nueva contraseña" req hint="Mínimo 8 caracteres"><input type="password" autoComplete="new-password" minLength={8} value={f.nueva} onChange={(e) => setF({ ...f, nueva: e.target.value })} required /></Campo>
-        <Campo label="Repetir nueva contraseña" req><input type="password" autoComplete="new-password" value={f.repetir} onChange={(e) => setF({ ...f, repetir: e.target.value })} required /></Campo>
+        {!recuperacion && <Campo label="Contraseña actual" req><ClaveInput autoComplete="current-password" value={f.actual} onChange={(e) => setF({ ...f, actual: e.target.value })} required /></Campo>}
+        <Campo label="Nueva contraseña" req hint="Mínimo 8 caracteres"><ClaveInput autoComplete="new-password" minLength={8} value={f.nueva} onChange={(e) => setF({ ...f, nueva: e.target.value })} required /></Campo>
+        <Campo label="Repetir nueva contraseña" req><ClaveInput autoComplete="new-password" value={f.repetir} onChange={(e) => setF({ ...f, repetir: e.target.value })} required /></Campo>
         <p className="texto-suave chico">Se cerrarán tus sesiones abiertas en otros dispositivos.</p>
         <div className="pie-form"><button type="button" className="btn btn-fantasma" onClick={onClose}>Cancelar</button><button className="btn btn-primario" disabled={cargando}>Guardar</button></div>
       </form>

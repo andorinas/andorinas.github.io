@@ -222,4 +222,15 @@ function NoEncontrado() {
   return <main className="contenedor"><h1>Página no encontrada</h1><button className="btn" onClick={() => nav('/')}>Volver a obras</button></main>;
 }
 
+// Si se publicó una versión nueva mientras la app estaba abierta, las partes que se cargan después (PDF, Excel)
+// pueden ya no existir: se recarga la página una vez (como mucho una por minuto) para tomar la versión nueva.
+window.addEventListener('vite:preloadError', (e) => {
+  try {
+    if (Date.now() - Number(sessionStorage.getItem('recarga-version') || 0) < 60000) return;
+    sessionStorage.setItem('recarga-version', String(Date.now()));
+  } catch { /* sin almacenamiento */ }
+  e.preventDefault();
+  window.location.reload();
+});
+
 createRoot(document.getElementById('root')).render(<React.StrictMode><ErrorPantalla><App /></ErrorPantalla></React.StrictMode>);
